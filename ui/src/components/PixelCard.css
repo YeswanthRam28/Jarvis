@@ -15,8 +15,8 @@
     overflow: hidden;
     border: 1px solid rgba(251, 191, 36, 0.2);
     border-radius: 12px;
-    background: rgba(2, 6, 23, 0.7);
-    backdrop-filter: blur(25px) saturate(160%);
+    background: rgba(18, 18, 18, 0.6);
+    backdrop-filter: blur(15px) saturate(180%);
     isolation: isolate;
     transition: border-color 200ms cubic-bezier(0.5, 1, 0.89, 1);
     user-select: none;

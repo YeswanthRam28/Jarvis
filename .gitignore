@@ -31,6 +31,7 @@ pip-delete-this-directory.txt
 
 # Virtual Environment
 venv/
+venv_hud/
 ENV/
 env/
 .venv/
@@ -65,9 +66,20 @@ data/recordings/
 *~
 *.sublime-project
 *.sublime-workspace
+.DS_Store
+
+# Frontend / UI
+ui/node_modules/
+ui/dist/
+ui/dist-ssr/
+ui/*.local
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*
+ui/.vite/
+ui/.eslintcache
 
 # OS
-.DS_Store
 Thumbs.db
 desktop.ini
 .directory
@@ -79,13 +91,3 @@ desktop.ini
 *.temp
 *.bak
 *.log
-
-# Frontend / UI
-ui/node_modules/
-ui/dist/
-ui/dist-ssr/
-ui/*.local
-ui/npm-debug.log*
-ui/yarn-debug.log*
-ui/yarn-error.log*
-node_modules/

@@ -126,6 +126,13 @@ const VARIANTS = {
         speed: 40,
         colors: '#fbbf24,#f59e0b,#d97706',
         noFocus: false
+    },
+    synth: {
+        activeColor: '#5227FF',
+        gap: 5,
+        speed: 40,
+        colors: '#5227FF,#FF9FFC,#B19EEF',
+        noFocus: false
     }
 };
 

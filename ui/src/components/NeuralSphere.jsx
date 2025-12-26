@@ -25,15 +25,17 @@ const ParticleSphere = ({ status }) => {
 
     useFrame((state) => {
         const time = state.clock.getElapsedTime();
-        pointsRef.current.rotation.y = time * 0.1;
-        pointsRef.current.rotation.x = time * 0.05;
+        if (pointsRef.current) {
+            pointsRef.current.rotation.y = time * 0.1;
+            pointsRef.current.rotation.x = time * 0.05;
 
-        // Pulse effect when processing
-        if (status === 'processing') {
-            const s = 1 + Math.sin(time * 10) * 0.1;
-            pointsRef.current.scale.set(s, s, s);
-        } else {
-            pointsRef.current.scale.set(1, 1, 1);
+            // Pulse effect when processing
+            if (status === 'processing') {
+                const s = 1 + Math.sin(time * 10) * 0.1;
+                pointsRef.current.scale.set(s, s, s);
+            } else {
+                pointsRef.current.scale.set(1, 1, 1);
+            }
         }
     });
 
@@ -41,12 +43,12 @@ const ParticleSphere = ({ status }) => {
         <Points ref={pointsRef} positions={particles} stride={3} frustumCulled={false}>
             <PointMaterial
                 transparent
-                color="#fbbf24"
+                color="#5227FF"
                 size={0.015}
                 sizeAttenuation={true}
                 depthWrite={false}
                 blending={THREE.AdditiveBlending}
-                opacity={Math.random() > 0.98 ? 0.2 : 0.8}
+                opacity={0.8}
             />
         </Points>
     );
@@ -62,17 +64,17 @@ const NeuralSphere = ({ status }) => {
                 {/* Decorative inner rings */}
                 <mesh rotation={[Math.PI / 2, 0, 0]}>
                     <torusGeometry args={[1.6, 0.005, 16, 100]} />
-                    <meshBasicMaterial color="#fbbf24" transparent opacity={0.2} />
+                    <meshBasicMaterial color="#FF9FFC" transparent opacity={0.2} />
                 </mesh>
                 <mesh rotation={[0, Math.PI / 2, 0]}>
                     <torusGeometry args={[1.7, 0.005, 16, 100]} />
-                    <meshBasicMaterial color="#fbbf24" transparent opacity={0.1} />
+                    <meshBasicMaterial color="#B19EEF" transparent opacity={0.1} />
                 </mesh>
             </Canvas>
 
             {/* Central Hex Overlay (optional) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-amber-500/20 rotate-45 flex items-center justify-center">
-                <div className="w-24 h-24 border border-amber-500/40 -rotate-45 animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-[#5227FF]/20 rotate-45 flex items-center justify-center">
+                <div className="w-24 h-24 border border-[#FF9FFC]/40 -rotate-45 animate-pulse" />
             </div>
         </div>
     );

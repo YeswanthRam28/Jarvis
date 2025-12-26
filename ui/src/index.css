@@ -3,12 +3,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Orbitron:wght@400;900&family=JetBrains+Mono:wght@300;500&display=swap');
 
 :root {
-  --midnight: #020617;
-  --fui-amber: #fbbf24;
-  --fui-amber-glow: rgba(251, 191, 36, 0.5);
+  --charcoal: #121212;
+  --midnight: #0a0a0a;
+  --fui-primary: #5227FF;
+  --fui-secondary: #FF9FFC;
+  --fui-tertiary: #B19EEF;
+  --fui-primary-glow: rgba(82, 39, 255, 0.5);
   --fui-white: #ffffff;
-  --fui-glass: rgba(2, 6, 23, 0.7);
-  --fui-border: rgba(251, 191, 36, 0.2);
+  --fui-glass: rgba(18, 18, 18, 0.85);
+  --fui-border: rgba(82, 39, 255, 0.25);
   --font-main: 'Rajdhani', sans-serif;
   --font-header: 'Orbitron', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -46,8 +49,8 @@ body {
   left: 0;
   width: 10px;
   height: 1px;
-  background: var(--fui-amber);
-  box-shadow: 0 0 10px var(--fui-amber);
+  background: var(--fui-primary);
+  box-shadow: 0 0 10px var(--fui-primary);
 }
 
 .hologram-panel::after {
@@ -57,8 +60,8 @@ body {
   right: 0;
   width: 10px;
   height: 1px;
-  background: var(--fui-amber);
-  box-shadow: 0 0 10px var(--fui-amber);
+  background: var(--fui-primary);
+  box-shadow: 0 0 10px var(--fui-primary);
 }
 
 /* Glitch Edge Effect */
@@ -90,12 +93,12 @@ body {
 
 .glitch-active {
   animation: glitch-edge 0.2s infinite;
-  border-color: var(--fui-amber);
+  border-color: var(--fui-primary);
 }
 
 .amber-glow-text {
-  color: var(--fui-amber);
-  text-shadow: 0 0 10px var(--fui-amber-glow);
+  color: var(--fui-primary);
+  text-shadow: 0 0 10px var(--fui-primary-glow);
 }
 
 .fui-white-text {
@@ -132,7 +135,7 @@ body {
   background: repeating-linear-gradient(0deg,
       transparent,
       transparent 1px,
-      rgba(251, 191, 36, 0.03) 2px,
+      rgba(82, 39, 255, 0.05) 2px,
       transparent 3px);
   pointer-events: none;
   z-index: 10;
@@ -154,4 +157,17 @@ body {
 
 .fui-flourish {
   animation: float-diag 4s infinite ease-in-out;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fui-primary);
+  border-radius: 10px;
 }

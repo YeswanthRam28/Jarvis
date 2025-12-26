@@ -11,6 +11,10 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Force offline mode for transformers/huggingface
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+
 # Base paths
 BASE_DIR = Path(__file__).parent
 MODELS_DIR = BASE_DIR / "models"
@@ -46,24 +50,23 @@ class LLMConfig(BaseModel):
         description="Path to GGUF model file"
     )
     context_size: int = Field(default=4096, description="Context window size")
-    max_tokens: int = Field(default=512, description="Maximum tokens to generate")
-    temperature: float = Field(default=0.7, description="Sampling temperature")
+    max_tokens: int = Field(default=256, description="Maximum tokens to generate")
+    temperature: float = Field(default=0.1, description="Sampling temperature")
     top_p: float = Field(default=0.9, description="Nucleus sampling top-p")
     top_k: int = Field(default=40, description="Top-k sampling")
     n_gpu_layers: int = Field(default=0, description="Number of layers to offload to GPU")
     n_threads: int = Field(default=4, description="Number of CPU threads")
     system_prompt: str = Field(
         default=(
-            "You are JARVIS, a helpful, concise, voice-based AI assistant.\n\n"
+            "You are JARVIS, a helpful, extremely concise, voice-based AI assistant.\n\n"
             "Rules:\n"
-            "- Do NOT translate unless explicitly asked\n"
-            "- Answer directly and naturally\n"
-            "- If you don’t know something, say so clearly\n"
-            "- Do not invent facts\n"
-            "- Keep responses short and conversational\n"
-            "- Never explain your internal reasoning\n"
-            "- Never mention relevance scores\n"
-            "- Never ask unrelated follow-up questions"
+            "- Be BRIEF: Use at most 1-2 short sentences\n"
+            "- Do NOT tell stories or invent scenarios\n"
+            "- If using a tool, only state the direct result\n"
+            "- Do NOT explain your reasoning or internal logic\n"
+            "- If you don't know something, say so directly\n"
+            "- Avoid multi-paragraph responses\n"
+            "- Never repeat the words 'Assistant:', 'User:', or 'Output:' in your response"
         ),
         description="System prompt for the LLM"
     )
@@ -143,6 +146,7 @@ class JarvisConfig(BaseModel):
     
     # Global settings
     wake_word: Optional[str] = Field(default=None, description="Wake word (None = always listening)")
+    wake_word_sound_path: Optional[Path] = Field(default=None, description="Path to MP3 sound to play when wake word detected")
     push_to_talk: bool = Field(default=True, description="Use push-to-talk mode")
     debug_mode: bool = Field(default=False, description="Enable debug mode")
 
@@ -169,6 +173,15 @@ class JarvisConfig(BaseModel):
         
         if debug := os.getenv("JARVIS_DEBUG"):
             config.debug_mode = debug.lower() in ("true", "1", "yes")
+        
+        if ptt := os.getenv("JARVIS_PUSH_TO_TALK"):
+            config.push_to_talk = ptt.lower() in ("true", "1", "yes")
+        
+        if wake_word := os.getenv("JARVIS_WAKE_WORD"):
+            config.wake_word = wake_word
+            
+        if wake_sound := os.getenv("JARVIS_WAKE_SOUND_PATH"):
+            config.wake_word_sound_path = Path(wake_sound)
         
         return config
 

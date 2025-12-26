@@ -7,6 +7,7 @@ Pipeline: Mic → Whisper → Intent → LLM → Tools → Memory → TTS
 import asyncio
 import signal
 import sys
+import re
 from pathlib import Path
 
 # Add project root to path
@@ -25,6 +26,7 @@ from tools.registry import ToolRegistry
 from tools.system_tools import GetTimeTool, GetSystemInfoTool, CalculatorTool
 from tools.memory_tools import RememberTool, RecallTool, GetMemoryStatsTool
 from utils.compatibility import apply_fixes
+from utils.audio import play_sound
 
 # Apply compatibility fixes before other imports
 apply_fixes()
@@ -69,6 +71,8 @@ class JARVIS:
         # State
         self.is_running = False
         self.shutdown_event = asyncio.Event()
+        self.awaiting_command = self.config.wake_word is None
+        self._shutdown_complete = False
     
     def initialize(self) -> None:
         """Initialize all components"""
@@ -145,7 +149,35 @@ class JARVIS:
                 logger.warning("No speech detected")
                 return
             
+            # Check for exit command
+            if "shut up" in user_text.lower():
+                logger.info("Exit command 'shut up' detected")
+                self.tts.speak("Okay, shutting down.")
+                self.is_running = False
+                return
+            
             logger.info(f"User said: '{user_text}'")
+            
+            # Wake word detection
+            if self.config.wake_word and not self.awaiting_command:
+                # Use regex for more robust matching (case-insensitive, whole word)
+                pattern = rf"\b{re.escape(self.config.wake_word)}\b"
+                if re.search(pattern, user_text, re.IGNORECASE):
+                    logger.info(f"Wake word detected: {self.config.wake_word}")
+                    self.awaiting_command = True
+                    
+                    if self.config.wake_word_sound_path:
+                        play_sound(self.config.wake_word_sound_path)
+                    
+                    # Strip wake word and see if there's more to process
+                    user_text = re.sub(pattern, "", user_text, flags=re.IGNORECASE).strip()
+                    if not user_text:
+                        logger.info("Wake word only detected, session started")
+                        return
+                else:
+                    logger.debug("Ignoring speech (no wake word)")
+                    return
+            
             self.conversation.add_message("user", user_text)
             
             # 2. Parse Intent
@@ -200,6 +232,9 @@ class JARVIS:
             # 7. Text-to-Speech
             logger.info("Speaking response...")
             self.tts.speak(response, blocking=True)
+            
+            # NOTE: We no longer reset awaiting_command here. 
+            # It stays True until "shut up" is detected.
             
             logger.info("✓ Processing complete")
         
@@ -259,8 +294,9 @@ class JARVIS:
             logger.info("Listening continuously... Press Ctrl+C to stop")
             
             # Keep running until interrupted
+            import time
             while self.is_running:
-                asyncio.sleep(1)
+                time.sleep(1)
         
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
@@ -270,8 +306,10 @@ class JARVIS:
     
     def shutdown(self) -> None:
         """Shutdown JARVIS gracefully"""
+        if self._shutdown_complete:
+            return
+            
         logger.info("Shutting down JARVIS...")
-        
         self.is_running = False
         
         # Stop audio input
@@ -290,6 +328,7 @@ class JARVIS:
         
         logger.info("Goodbye!")
         self.tts.speak("Goodbye!")
+        self._shutdown_complete = True
 
 
 def main():

@@ -79,8 +79,8 @@ class LLMEngine:
         """
         system = system_prompt or self.config.system_prompt
         
-        # Build prompt with chat template format
-        prompt_parts = [f"System: {system}\n"]
+        # Build prompt with Instruct format (optimized for Phi-2)
+        prompt_parts = [f"Instruct: {system}\n"]
         
         # Add context if provided
         if context:
@@ -88,6 +88,7 @@ class LLMEngine:
         
         # Add conversation history
         if include_history and self.conversation_history:
+            prompt_parts.append("History:\n")
             for msg in self.conversation_history[-self.config.context_size:]:
                 role = msg["role"].capitalize()
                 content = msg["content"]
@@ -95,7 +96,7 @@ class LLMEngine:
         
         # Add current user message
         prompt_parts.append(f"User: {user_message}\n")
-        prompt_parts.append("Assistant:")
+        prompt_parts.append("Output:")
         
         return "".join(prompt_parts)
     
@@ -142,7 +143,7 @@ class LLMEngine:
                 temperature=temperature,
                 top_p=self.config.top_p,
                 top_k=self.config.top_k,
-                stop=["User:", "System:"],
+                stop=["User:", "Assistant:", "Instruct:", "Output:", "History:"],
                 echo=False
             )
             
@@ -200,7 +201,7 @@ class LLMEngine:
                 temperature=temperature,
                 top_p=self.config.top_p,
                 top_k=self.config.top_k,
-                stop=["User:", "System:"],
+                stop=["User:", "Assistant:", "Instruct:", "Output:", "History:"],
                 stream=True
             ):
                 chunk = output["choices"][0]["text"]

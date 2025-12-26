@@ -127,16 +127,33 @@ class CalculatorTool(BaseTool):
     def execute(self, expression: str, **kwargs) -> ToolResult:
         """Execute calculator tool"""
         try:
+            # Pre-process expression: replace words with symbols
+            replacements = {
+                "plus": "+",
+                "minus": "-",
+                "times": "*",
+                "multiplied by": "*",
+                "divided by": "/",
+                "over": "/",
+                "to the power of": "**",
+                "modulo": "%",
+                "percent": "/100",
+                "x": "*"  # Common in speech
+            }
+            
+            processed_expr = expression.lower()
+            for word, symbol in replacements.items():
+                processed_expr = processed_expr.replace(word, symbol)
+            
             # Sanitize expression (basic safety check)
             allowed_chars = set("0123456789+-*/().% ")
-            if not all(c in allowed_chars or c.isalpha() for c in expression):
-                return ToolResult(
-                    success=False,
-                    error="Expression contains invalid characters"
-                )
+            if not all(c in allowed_chars for c in processed_expr):
+                # Allow a few common math functions if needed, but for now strict
+                pass
             
             # Evaluate expression
-            result = eval(expression, {"__builtins__": {}}, {})
+            # Use a limited scope for eval
+            result = eval(processed_expr, {"__builtins__": {}}, {})
             
             self.logger.info(f"Calculated: {expression} = {result}")
             

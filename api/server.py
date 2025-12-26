@@ -87,8 +87,32 @@ async def websocket_endpoint(websocket: WebSocket):
         }))
         
         while True:
-            # Receive commands from UI if needed
-            await websocket.receive_text()
+            # Receive commands from UI
+            data = await websocket.receive_text()
+            try:
+                msg = json.loads(data)
+                if msg.get("type") == "command":
+                    cmd = msg.get("data")
+                    if cmd == "stop":
+                        logger.info("UI requested stop")
+                        # You could implement a mid-processing interrupt here
+                        # For now, we'll just force idle status
+                        if manager.loop:
+                            asyncio.run_coroutine_threadsafe(
+                                manager.broadcast({"type": "status", "data": "idle"}),
+                                manager.loop
+                            )
+                    elif cmd == "shutdown":
+                        logger.info("UI requested shutdown")
+                        jarvis.is_running = False
+                        # Send status update
+                        if manager.loop:
+                            asyncio.run_coroutine_threadsafe(
+                                manager.broadcast({"type": "status", "data": "offline"}),
+                                manager.loop
+                            )
+            except Exception as e:
+                logger.error(f"Failed to process UI message: {e}")
             
     except WebSocketDisconnect:
         manager.disconnect(websocket)

@@ -52,5 +52,11 @@ export const useJarvis = () => {
         };
     }, []);
 
-    return { status, transcription, response, state };
+    const sendCommand = useCallback((type, data) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type, data }));
+        }
+    }, [socket]);
+
+    return { status, transcription, response, state, sendCommand };
 };

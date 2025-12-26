@@ -1,0 +1,25 @@
+{
+  "name": "jarvis-hud",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "wait-on http://localhost:5173 && electron ."
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "framer-motion": "^10.12.16",
+    "lucide-react": "^0.244.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^4.0.0",
+    "electron": "^25.0.1",
+    "vite": "^4.3.9",
+    "wait-on": "^7.0.1"
+  }
+}

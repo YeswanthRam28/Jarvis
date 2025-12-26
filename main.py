@@ -73,6 +73,7 @@ class JARVIS:
         self.shutdown_event = asyncio.Event()
         self.awaiting_command = self.config.wake_word is None
         self._shutdown_complete = False
+        self.on_update = None  # Callback for UI updates
     
     def initialize(self) -> None:
         """Initialize all components"""
@@ -138,12 +139,18 @@ class JARVIS:
             audio_data: Audio data from microphone
         """
         try:
+            if self.on_update:
+                self.on_update({"type": "status", "data": "processing"})
+            
             logger.info("Processing audio input...")
             
             # 1. Speech-to-Text
             logger.info("Transcribing audio...")
             transcription = self.stt.transcribe(audio_data)
             user_text = transcription.get("text", "").strip()
+            
+            if self.on_update:
+                self.on_update({"type": "transcription", "data": user_text})
             
             if not user_text:
                 logger.warning("No speech detected")
@@ -177,6 +184,9 @@ class JARVIS:
                 else:
                     logger.debug("Ignoring speech (no wake word)")
                     return
+            
+            if self.on_update:
+                self.on_update({"type": "state", "data": {"awaiting_command": self.awaiting_command}})
             
             self.conversation.add_message("user", user_text)
             
@@ -236,7 +246,13 @@ class JARVIS:
             # NOTE: We no longer reset awaiting_command here. 
             # It stays True until "shut up" is detected.
             
+            if self.on_update:
+                self.on_update({"type": "response", "data": response})
+            
             logger.info("✓ Processing complete")
+            
+            if self.on_update:
+                self.on_update({"type": "status", "data": "idle"})
         
         except Exception as e:
             logger.error(f"Error processing audio: {e}", exc_info=True)

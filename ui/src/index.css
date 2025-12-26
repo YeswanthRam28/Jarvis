@@ -1,18 +1,42 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Orbitron:wght@400;900&family=JetBrains+Mono:wght@300;500&display=swap');
+
 :root {
-  --jarvis-blue: #00f2ff;
-  --jarvis-navy: #0a192f;
-  --jarvis-glass: rgba(10, 25, 47, 0.7);
-  --jarvis-border: rgba(0, 242, 255, 0.3);
+  --fui-cyan: #00d4ff;
+  --fui-cyan-dim: rgba(0, 212, 255, 0.2);
+  --fui-amber: #ffae00;
+  --fui-charcoal: #0a0a0a;
+  --fui-glass: rgba(10, 10, 10, 0.85);
+  --fui-border: rgba(0, 212, 255, 0.15);
+  --font-main: 'Rajdhani', sans-serif;
+  --font-header: 'Orbitron', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 body {
   margin: 0;
   padding: 0;
   background: transparent !important;
-  color: white;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #e0e0e0;
+  font-family: var(--font-main);
   overflow: hidden;
   user-select: none;
+}
+
+/* FUI Scanline/CRT Effect */
+body::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+  z-index: 1000;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
 }
 
 #root {
@@ -20,22 +44,100 @@ body {
   height: 100vh;
 }
 
-.glass-panel {
-  background: var(--jarvis-glass);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--jarvis-border);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+.fui-panel {
+  background: var(--fui-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--fui-border);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+  position: relative;
 }
 
-.glow-text {
-  text-shadow: 0 0 10px var(--jarvis-blue);
+.fui-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-top: 1px solid var(--fui-cyan);
+  border-left: 1px solid var(--fui-cyan);
 }
 
-.scrolling-transcript {
-  scrollbar-width: none;
+.fui-panel::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 4px;
+  height: 4px;
+  border-bottom: 1px solid var(--fui-cyan);
+  border-right: 1px solid var(--fui-cyan);
 }
 
-.scrolling-transcript::-webkit-scrollbar {
-  display: none;
+.fui-text-glow {
+  color: var(--fui-cyan);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+  letter-spacing: 0.1em;
+}
+
+.fui-text-amber {
+  color: var(--fui-amber);
+  text-shadow: 0 0 8px rgba(255, 174, 0, 0.6);
+}
+
+.fui-label {
+  font-family: var(--font-header);
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  opacity: 0.4;
+  text-transform: uppercase;
+}
+
+.fui-telemetry-scroll {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--fui-cyan-dim);
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+
+/* Hexagon Map Overlay */
+.fui-topo-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image:
+    radial-gradient(var(--fui-cyan-dim) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  opacity: 0.15;
+  z-index: -1;
+}
+
+.fui-progress-ring {
+  transform: rotate(-90deg);
+}
+
+.fui-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--fui-border), transparent);
+  width: 100%;
+  margin: 10px 0;
+}
+
+@keyframes pulse-fui {
+  0% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.fui-anim-pulse {
+  animation: pulse-fui 2s infinite ease-in-out;
 }

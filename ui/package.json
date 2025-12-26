@@ -9,16 +9,20 @@
     "electron": "wait-on http://localhost:5173 && electron ."
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "framer-motion": "^10.12.16",
-    "lucide-react": "^0.244.0"
+    "lucide-react": "^0.244.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.23",
     "electron": "^25.0.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "vite": "^4.3.9",
     "wait-on": "^7.0.1"
   }

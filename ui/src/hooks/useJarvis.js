@@ -6,6 +6,7 @@ export const useJarvis = () => {
     const [transcription, setTranscription] = useState('');
     const [response, setResponse] = useState('');
     const [state, setState] = useState({ awaiting_command: true });
+    const [telemetry, setTelemetry] = useState({ cpu: 0, memory: 0, active_mem: '0GB', total_mem: '0GB' });
     const [backendIp, setBackendIp] = useState(localStorage.getItem('jarvis_backend_ip') || 'localhost');
 
     useEffect(() => {
@@ -19,7 +20,6 @@ export const useJarvis = () => {
 
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            console.log('Received:', message);
 
             switch (message.type) {
                 case 'status':
@@ -37,6 +37,9 @@ export const useJarvis = () => {
                     break;
                 case 'state':
                     setState(message.data);
+                    break;
+                case 'telemetry':
+                    setTelemetry(message.data);
                     break;
                 default:
                     break;
@@ -71,5 +74,5 @@ export const useJarvis = () => {
         }
     }, [socket]);
 
-    return { status, transcription, response, state, sendCommand, backendIp, updateBackendIp };
+    return { status, transcription, response, state, sendCommand, backendIp, updateBackendIp, telemetry };
 };

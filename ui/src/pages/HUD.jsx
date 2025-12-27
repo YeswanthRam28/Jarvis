@@ -41,7 +41,7 @@ const CornerBracket = ({ position }) => {
 };
 
 const HUD = () => {
-    const { status, transcription, response, state, sendCommand, backendIp, updateBackendIp } = useJarvis();
+    const { status, transcription, response, state, sendCommand, backendIp, updateBackendIp, telemetry } = useJarvis();
     const [logs, setLogs] = useState([]);
 
     const handleIpChange = () => {
@@ -52,13 +52,18 @@ const HUD = () => {
     };
 
     useEffect(() => {
-        const itv = setInterval(() => {
-            const hex = Math.random().toString(16).slice(2, 10).toUpperCase();
-            const ops = ['SYNC', 'PUSH', 'PULL', 'INIT', 'CALC', 'MEM_RW'];
-            setLogs(p => [`${ops[Math.floor(Math.random() * ops.length)]} :: 0x${hex}`, ...p].slice(0, 12));
-        }, 1500);
-        return () => clearInterval(itv);
-    }, []);
+        const logMsg = status === 'offline' ? 'CONNECTION_LOST :: RETRYING...' :
+            status === 'processing' ? 'CORTEX_ACTIVE :: ANALYZING...' :
+                'KERNEL_READY :: LISTENING';
+        const hex = Math.random().toString(16).slice(2, 6).toUpperCase();
+        setLogs(p => [`${logMsg} [0x${hex}]`, ...p].slice(0, 15));
+    }, [status]);
+
+    useEffect(() => {
+        if (transcription) {
+            setLogs(p => [`STT_CAPTURE :: "${transcription.slice(0, 20)}..."`, ...p].slice(0, 15));
+        }
+    }, [transcription]);
 
     return (
         <div className="w-full h-full flex flex-col p-10 relative z-20">
@@ -82,8 +87,8 @@ const HUD = () => {
                             value={status === 'processing' ? 'ACTIVE_THOUGHT' : status === 'offline' ? 'OFFLINE' : 'STANDBY'}
                             status={status === 'processing' || status === 'offline' ? 'alert' : 'normal'}
                         />
-                        <TelemetryPod label="Core_Load" value="1.21" unit="GW" />
-                        <TelemetryPod label="Neural_Sync" value="99.98" unit="%" />
+                        <TelemetryPod label="CPU_LOAD" value={telemetry.cpu || 0} unit="%" />
+                        <TelemetryPod label="MEM_SYNC" value={telemetry.memory || 0} unit="%" />
                     </div>
                 </motion.div>
 
@@ -111,13 +116,12 @@ const HUD = () => {
                 <div className="relative pointer-events-auto">
                     <NeuralSphere status={status} />
 
-                    {/* Floating Info Pods around the sphere */}
                     <motion.div
                         animate={{ y: [0, -10, 0] }}
                         transition={{ duration: 4, repeat: Infinity }}
                         className="absolute -top-10 -right-20 hologram-panel p-2 px-4 text-[9px] font-mono border-[#FF9FFC]/20"
                     >
-                        SYS_PROC :: 0x8F22A
+                        SYS_PROC :: {telemetry.active_mem || '0GB'} / {telemetry.total_mem || '0GB'}
                     </motion.div>
                 </div>
             </div>
@@ -140,14 +144,14 @@ const HUD = () => {
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-2">
                                     <Terminal size={14} className="text-[#FF9FFC]" />
-                                    <span className="fui-label-mini opacity-100">Cortex_Telemetry</span>
+                                    <span className="fui-label-mini opacity-100">Core_Stream</span>
                                 </div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#5227FF] animate-ping" />
                             </div>
                             <div className="flex flex-col gap-1.5 font-mono text-[9px] text-[#B19EEF]/60 overflow-hidden h-full italic">
                                 {logs.map((L, i) => (
                                     <div key={i} className="flex gap-2 items-center">
-                                        <span className="opacity-20 text-[7px]">{Math.floor(Math.random() * 9999)}</span>
+                                        <span className="opacity-20 text-[7px]">{i.toString().padStart(3, '0')}</span>
                                         <span>{L}</span>
                                     </div>
                                 ))}
@@ -157,13 +161,12 @@ const HUD = () => {
 
                     <div className="flex flex-col gap-3">
                         <div className="flex justify-between items-end">
-                            <span className="fui-label-mini">Mem_Buffer</span>
-                            <span className="text-[10px] font-mono text-white/40">78%</span>
+                            <span className="fui-label-mini">CPU_Buffer</span>
+                            <span className="text-[10px] font-mono text-white/40">{telemetry.cpu || 0}%</span>
                         </div>
                         <div className="h-1 bg-white/5 w-full relative overflow-hidden">
                             <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: '78%' }}
+                                animate={{ width: `${telemetry.cpu || 0}%` }}
                                 className="h-full bg-[#5227FF] shadow-[0_0_10px_#5227FF]"
                             />
                         </div>
@@ -177,9 +180,9 @@ const HUD = () => {
                     className="flex flex-col gap-8 w-64 items-end pointer-events-auto"
                 >
                     <div className="text-right flex flex-col gap-1">
-                        <span className="fui-label-mini">Spatial_Lock</span>
+                        <span className="fui-label-mini">Signal_Status</span>
                         <span className="text-xs font-mono tracking-tighter opacity-70 italic whitespace-nowrap">
-                            GRID_Z: 114.009 // LAT: 34.01 // LNG: -118.29
+                            LATENCY: {(Math.random() * 50 + 10).toFixed(0)}ms // LOSS: 0.00%
                         </span>
                     </div>
 
@@ -209,19 +212,19 @@ const HUD = () => {
 
                             <div className="flex flex-col gap-2">
                                 <div className="flex justify-between items-center text-[10px] opacity-50 uppercase tracking-widest font-mono">
-                                    <span>Sub_Processor</span>
-                                    <span>Active</span>
+                                    <span>Mem_Usage</span>
+                                    <span>{telemetry.memory || 0}%</span>
                                 </div>
                                 <div className="flex gap-1 h-3">
                                     {[...Array(12)].map((_, i) => (
-                                        <div key={i} className={`flex-1 ${i < 8 ? 'bg-[#5227FF]' : 'bg-white/5'}`} />
+                                        <div key={i} className={`flex-1 ${i < (telemetry.memory / 8.3) ? 'bg-[#5227FF]' : 'bg-white/5'}`} />
                                     ))}
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex justify-between items-center text-[10px] opacity-50 uppercase tracking-widest font-mono">
-                                    <span>Kernel_Stability</span>
-                                    <span>94%</span>
+                                    <span>System_Heal</span>
+                                    <span>98%</span>
                                 </div>
                                 <div className="flex gap-1 h-3">
                                     {[...Array(12)].map((_, i) => (
@@ -237,19 +240,19 @@ const HUD = () => {
             {/* FOOTER RESPONSE & VOICE WAVE */}
             <div className="mt-auto flex flex-col gap-6 relative pt-10 z-30">
 
-                {/* Transcription Overlay (Floating above voice wave) */}
+                {/* Transcription Overlay */}
                 <AnimatePresence>
                     {transcription && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
-                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                            exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
                             className="mx-auto"
                         >
                             <div className="px-10 py-4 hologram-panel border-[#5227FF]/40 bg-[#121212]/95 backdrop-blur-2xl">
                                 <div className="flex items-center gap-3 mb-2 opacity-30">
                                     <Command size={14} />
-                                    <span className="fui-label-mini">Thought_Stream_Capture</span>
+                                    <span className="fui-label-mini">Transcription</span>
                                 </div>
                                 <p className="text-3xl font-light tracking-wide text-white m-0 uppercase drop-shadow-2xl">
                                     "{transcription}"
@@ -262,39 +265,34 @@ const HUD = () => {
                 {/* VOICE WAVE FEEDBACK */}
                 <div className="w-full flex flex-col items-center gap-2">
                     <VoiceWave status={status} />
-                    <span className="fui-label-mini opacity-20">Voice_Feed_Standby</span>
+                    <span className="fui-label-mini opacity-20">Voice_Link_Active</span>
                 </div>
 
                 {/* FINAL RESPONSE BOX */}
                 <div className="flex justify-between items-end gap-10">
-                    <div className="flex gap-10 opacity-40 hover:opacity-100 transition-opacity">
+                    <div className="flex gap-10 opacity-30">
                         <div className="flex items-center gap-2">
                             <Info size={14} className="text-[#B19EEF]" />
-                            <span className="text-[10px] font-mono tracking-widest">v4.8.0_SYNTH</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Activity size={14} className="text-[#FF9FFC]" />
-                            <span className="text-[10px] font-mono tracking-widest">HEARTBEAT_ACK</span>
+                            <span className="text-[10px] font-mono tracking-widest">v4.8.0</span>
                         </div>
                     </div>
 
                     <AnimatePresence mode="wait">
                         {response && (
-                            <PixelCard variant="synth" className="max-w-2xl border-r-2 border-r-[#FF9FFC]">
+                            <PixelCard variant="synth" className="max-w-2xl border-r-2 border-r-[#FF9FFC] shadow-[0_0_50px_rgba(82,39,255,0.1)]">
                                 <motion.div
-                                    initial={{ opacity: 0, width: 0 }}
-                                    animate={{ opacity: 1, width: 'auto' }}
-                                    exit={{ opacity: 0, x: 200 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, filter: 'blur(10px)' }}
                                     className="p-8 bg-[#121212]/95 h-full relative"
                                 >
                                     <div className="flex justify-between items-center mb-5">
                                         <div className="flex items-center gap-3 text-[#FF9FFC]">
                                             <Activity size={16} className="animate-pulse" />
-                                            <span className="fui-label-mini italic opacity-100">Assistant_Transmission</span>
+                                            <span className="fui-label-mini italic opacity-100">Assistant_Response</span>
                                         </div>
-                                        <div className="text-[9px] font-mono opacity-30 tracking-[0.5em]">MARK_85_CORTEX</div>
                                     </div>
-                                    <div className="text-2xl font-light leading-relaxed text-white m-0 tracking-wide selection:bg-[#5227FF] selection:text-white">
+                                    <div className="text-2xl font-light leading-relaxed text-white m-0 tracking-wide">
                                         <DecayText text={response} />
                                     </div>
                                 </motion.div>
@@ -305,10 +303,10 @@ const HUD = () => {
                     <div className="flex flex-col items-end gap-2">
                         <div className="flex gap-2">
                             {[...Array(5)].map((_, i) => (
-                                <div key={i} className="w-1 h-1 bg-[#5227FF]/40" />
+                                <div key={i} className={`w-1 h-1 ${status === 'offline' ? 'bg-red-500' : 'bg-[#5227FF]'}`} />
                             ))}
                         </div>
-                        <span className="fui-label-mini opacity-20">Synth_Hybrid_Link</span>
+                        <span className="fui-label-mini opacity-20">Link_Stability</span>
                     </div>
                 </div>
             </div>

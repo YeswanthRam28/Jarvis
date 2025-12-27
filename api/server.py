@@ -14,6 +14,9 @@ from utils.logger import get_logger
 
 logger = get_logger("jarvis.api")
 
+import psutil
+import time
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
@@ -24,14 +27,15 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def broadcast(self, message: dict):
         for connection in self.active_connections:
             try:
                 await connection.send_text(json.dumps(message))
             except Exception as e:
-                logger.error(f"Broadcast failed: {e}")
+                logger.debug(f"Broadcast failed to a client: {e}")
 
 manager = ConnectionManager()
 jarvis = JARVIS()
@@ -48,6 +52,28 @@ def jarvis_update_callback(event):
 # Register the callback
 jarvis.on_update = jarvis_update_callback
 
+async def telemetry_task():
+    """Background task to broadcast system telemetry"""
+    while True:
+        try:
+            cpu_usage = psutil.cpu_percent()
+            mem = psutil.virtual_memory()
+            
+            telemetry_data = {
+                "type": "telemetry",
+                "data": {
+                    "cpu": cpu_usage,
+                    "memory": mem.percent,
+                    "active_mem": f"{mem.used / (1024**3):.1f}GB",
+                    "total_mem": f"{mem.total / (1024**3):.1f}GB",
+                    "timestamp": time.time()
+                }
+            }
+            await manager.broadcast(telemetry_data)
+        except Exception as e:
+            logger.error(f"Telemetry error: {e}")
+        await asyncio.sleep(2)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -56,10 +82,14 @@ async def lifespan(app: FastAPI):
     jarvis.is_running = True
     jarvis.audio_input.start(callback=jarvis.process_audio)
     
+    # Start telemetry task
+    telemetry_bg = asyncio.create_task(telemetry_task())
+    
     yield
     
     # Shutdown
     jarvis.is_running = False
+    telemetry_bg.cancel()
     jarvis.shutdown()
 
 app = FastAPI(title="JARVIS API", lifespan=lifespan)

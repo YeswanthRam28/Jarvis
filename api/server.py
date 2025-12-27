@@ -105,12 +105,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     elif cmd == "shutdown":
                         logger.info("UI requested shutdown")
                         jarvis.is_running = False
+                        
                         # Send status update
                         if manager.loop:
                             asyncio.run_coroutine_threadsafe(
                                 manager.broadcast({"type": "status", "data": "offline"}),
                                 manager.loop
                             )
+                        
+                        # Graceful exit after broadcast
+                        async def exit_after_delay():
+                            await asyncio.sleep(0.5)
+                            import os
+                            import signal
+                            logger.info("Triggering process exit...")
+                            os.kill(os.getpid(), signal.SIGINT)
+                            
+                        asyncio.create_task(exit_after_delay())
             except Exception as e:
                 logger.error(f"Failed to process UI message: {e}")
             

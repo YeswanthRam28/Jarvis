@@ -70,7 +70,11 @@ const HUD = () => {
                         </div>
                     </div>
                     <div className="flex gap-6 mt-3">
-                        <TelemetryPod label="Internal_Status" value={status === 'processing' ? 'ACTIVE_THOUGHT' : 'STANDBY'} status={status === 'processing' ? 'alert' : 'normal'} />
+                        <TelemetryPod
+                            label="Internal_Status"
+                            value={status === 'processing' ? 'ACTIVE_THOUGHT' : status === 'offline' ? 'OFFLINE' : 'STANDBY'}
+                            status={status === 'processing' || status === 'offline' ? 'alert' : 'normal'}
+                        />
                         <TelemetryPod label="Core_Load" value="1.21" unit="GW" />
                         <TelemetryPod label="Neural_Sync" value="99.98" unit="%" />
                     </div>
@@ -189,7 +193,7 @@ const HUD = () => {
                                         onClick={() => sendCommand('command', 'shutdown')}
                                         className="cursor-target flex-1 px-3 py-2 border border-red-500/30 bg-red-500/5 hover:bg-red-500/20 text-[10px] font-mono tracking-widest uppercase transition-colors text-red-400"
                                     >
-                                        Shut
+                                        Shutdown
                                     </button>
                                 </div>
                             </div>

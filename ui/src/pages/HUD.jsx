@@ -41,8 +41,15 @@ const CornerBracket = ({ position }) => {
 };
 
 const HUD = () => {
-    const { status, transcription, response, state, sendCommand } = useJarvis();
+    const { status, transcription, response, state, sendCommand, backendIp, updateBackendIp } = useJarvis();
     const [logs, setLogs] = useState([]);
+
+    const handleIpChange = () => {
+        const newIp = prompt('Enter Backend IP Address:', backendIp);
+        if (newIp && newIp !== backendIp) {
+            updateBackendIp(newIp);
+        }
+    };
 
     useEffect(() => {
         const itv = setInterval(() => {
@@ -83,7 +90,9 @@ const HUD = () => {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="hologram-panel p-4 flex gap-8 items-center border-[#5227FF]/30"
+                    onClick={handleIpChange}
+                    className="hologram-panel p-4 flex gap-8 items-center border-[#5227FF]/30 cursor-pointer hover:border-[#5227FF]/60 transition-colors"
+                    title="Click to change Backend IP"
                 >
                     <div className="flex flex-col items-end">
                         <span className="fui-label-mini">Auth_Level</span>
@@ -91,8 +100,8 @@ const HUD = () => {
                     </div>
                     <div className="w-[2px] h-8 bg-[#5227FF]/20" />
                     <div className="flex flex-col items-center gap-1">
-                        <Wifi size={16} className="text-[#FF9FFC] fui-anim-pulse" />
-                        <span className="text-[8px] font-mono opacity-50 uppercase">Linked</span>
+                        <Wifi size={16} className={`${status === 'offline' ? 'text-red-500' : 'text-[#FF9FFC]'} fui-anim-pulse`} />
+                        <span className="text-[8px] font-mono opacity-50 uppercase">{backendIp}</span>
                     </div>
                 </motion.div>
             </div>

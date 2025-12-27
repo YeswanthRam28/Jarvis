@@ -6,12 +6,15 @@ export const useJarvis = () => {
     const [transcription, setTranscription] = useState('');
     const [response, setResponse] = useState('');
     const [state, setState] = useState({ awaiting_command: true });
+    const [backendIp, setBackendIp] = useState(localStorage.getItem('jarvis_backend_ip') || 'localhost');
 
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8000/ws');
+        const wsUrl = `ws://${backendIp}:8000/ws`;
+        const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            console.log('Connected to JARVIS Backend');
+            console.log(`Connected to JARVIS Backend at ${backendIp}`);
+            setStatus('idle');
         };
 
         ws.onmessage = (event) => {
@@ -40,9 +43,14 @@ export const useJarvis = () => {
             }
         };
 
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            setStatus('offline');
+        };
+
         ws.onclose = () => {
             console.log('Disconnected from JARVIS Backend');
-            // Reconnect logic could be added here
+            setStatus('offline');
         };
 
         setSocket(ws);
@@ -50,7 +58,12 @@ export const useJarvis = () => {
         return () => {
             ws.close();
         };
-    }, []);
+    }, [backendIp]);
+
+    const updateBackendIp = (ip) => {
+        localStorage.setItem('jarvis_backend_ip', ip);
+        setBackendIp(ip);
+    };
 
     const sendCommand = useCallback((type, data) => {
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -58,5 +71,5 @@ export const useJarvis = () => {
         }
     }, [socket]);
 
-    return { status, transcription, response, state, sendCommand };
+    return { status, transcription, response, state, sendCommand, backendIp, updateBackendIp };
 };

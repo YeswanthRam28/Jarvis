@@ -112,17 +112,9 @@ const HUD = () => {
             </div>
 
             {/* CENTRAL NEURAL INTERFACE */}
-            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none transform -translate-y-32">
                 <div className="relative pointer-events-auto">
                     <NeuralSphere status={status} />
-
-                    <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="absolute -top-10 -right-20 hologram-panel p-2 px-4 text-[9px] font-mono border-[#FF9FFC]/20"
-                    >
-                        SYS_PROC :: {telemetry.active_mem || '0GB'} / {telemetry.total_mem || '0GB'}
-                    </motion.div>
                 </div>
             </div>
 
@@ -237,76 +229,87 @@ const HUD = () => {
                 </motion.div>
             </div>
 
-            {/* FOOTER RESPONSE & VOICE WAVE */}
-            <div className="mt-auto flex flex-col gap-6 relative pt-10 z-30">
-
-                {/* Transcription Overlay */}
-                <AnimatePresence>
-                    {transcription && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="mx-auto"
-                        >
-                            <div className="px-10 py-4 hologram-panel border-[#5227FF]/40 bg-[#121212]/95 backdrop-blur-2xl">
-                                <div className="flex items-center gap-3 mb-2 opacity-30">
-                                    <Command size={14} />
-                                    <span className="fui-label-mini">Transcription</span>
-                                </div>
-                                <p className="text-3xl font-light tracking-wide text-white m-0 uppercase drop-shadow-2xl">
-                                    "{transcription}"
-                                </p>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+            {/* FOOTER AREA - BOTTOM ANCHORED */}
+            <div className="fixed bottom-0 left-0 w-full p-8 flex flex-col items-center pointer-events-none z-50">
 
                 {/* VOICE WAVE FEEDBACK */}
-                <div className="w-full flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1 pointer-events-auto mb-4">
                     <VoiceWave status={status} />
-                    <span className="fui-label-mini opacity-20">Voice_Link_Active</span>
+                    <span className="fui-label-mini opacity-20 text-[8px]">Neural_Link_Static</span>
+                </div>
+
+                {/* Transcription Overlay - Compact Capsule */}
+                <div className="w-full max-w-xl pointer-events-none mb-4">
+                    <AnimatePresence>
+                        {transcription && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                className="text-center"
+                            >
+                                <div className="inline-block px-5 py-1.5 hologram-panel border-[#5227FF]/40 bg-[#121212]/80 backdrop-blur-xl rounded-full">
+                                    <p className="text-lg font-light tracking-[0.15em] text-[#B19EEF] m-0 uppercase italic">
+                                        "{transcription}"
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* FINAL RESPONSE BOX */}
-                <div className="flex justify-between items-end gap-10">
-                    <div className="flex gap-10 opacity-30">
-                        <div className="flex items-center gap-2">
-                            <Info size={14} className="text-[#B19EEF]" />
-                            <span className="text-[10px] font-mono tracking-widest">v4.8.0</span>
-                        </div>
-                    </div>
-
+                <div className="w-full max-w-2xl pointer-events-auto mb-6">
                     <AnimatePresence mode="wait">
                         {response && (
-                            <PixelCard variant="synth" className="max-w-2xl border-r-2 border-r-[#FF9FFC] shadow-[0_0_50px_rgba(82,39,255,0.1)]">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, filter: 'blur(10px)' }}
-                                    className="p-8 bg-[#121212]/95 h-full relative"
-                                >
-                                    <div className="flex justify-between items-center mb-5">
-                                        <div className="flex items-center gap-3 text-[#FF9FFC]">
-                                            <Activity size={16} className="animate-pulse" />
-                                            <span className="fui-label-mini italic opacity-100">Assistant_Response</span>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, filter: 'blur(10px)' }}
+                            >
+                                <PixelCard variant="synth" className="border-t border-t-[#FF9FFC]/40 shadow-[0_-15px_60px_rgba(82,39,255,0.25)] bg-[#050505]/98">
+                                    <div className="p-6 relative">
+                                        <div className="absolute top-3 left-6 flex items-center gap-2 text-[#FF9FFC]/50">
+                                            <Activity size={10} className="animate-pulse" />
+                                            <span className="text-[7px] font-mono tracking-[0.4em] uppercase">Transmission_Feed</span>
+                                        </div>
+                                        <div className="max-h-[140px] overflow-y-auto mt-4 px-4 custom-scrollbar">
+                                            <div className="text-xl font-light leading-relaxed text-white tracking-wide text-center">
+                                                <DecayText text={response} />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="text-2xl font-light leading-relaxed text-white m-0 tracking-wide">
-                                        <DecayText text={response} />
-                                    </div>
-                                </motion.div>
-                            </PixelCard>
+                                </PixelCard>
+                            </motion.div>
                         )}
                     </AnimatePresence>
+                </div>
+
+                {/* STATUS BAR DECORATION */}
+                <div className="w-full flex justify-between items-end opacity-20 px-8">
+                    <div className="flex gap-4">
+                        <span className="text-[9px] font-mono tracking-widest uppercase">Kernel.85</span>
+                        <span className="text-[9px] font-mono tracking-widest uppercase text-[#FF9FFC]">Secure_Handshake</span>
+                    </div>
 
                     <div className="flex flex-col items-end gap-2">
-                        <div className="flex gap-2">
-                            {[...Array(5)].map((_, i) => (
-                                <div key={i} className={`w-1 h-1 ${status === 'offline' ? 'bg-red-500' : 'bg-[#5227FF]'}`} />
+                        <motion.div
+                            animate={{ opacity: [0.4, 1, 0.4] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="hologram-panel py-1 px-3 text-[8px] font-mono border-[#FF9FFC]/20 bg-[#121212]/40 mb-1"
+                        >
+                            SYS_PROC :: {telemetry.active_mem || '0GB'} / {telemetry.total_mem || '0GB'}
+                        </motion.div>
+                        <div className="flex gap-1">
+                            {[...Array(10)].map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    animate={{ opacity: [0.2, 1, 0.2] }}
+                                    transition={{ duration: 1.5, delay: i * 0.1, repeat: Infinity }}
+                                    className="w-1 h-3 bg-[#5227FF]"
+                                />
                             ))}
                         </div>
-                        <span className="fui-label-mini opacity-20">Link_Stability</span>
                     </div>
                 </div>
             </div>

@@ -3,44 +3,44 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const DecayText = ({ text, className = "" }) => {
     const [displayText, setDisplayText] = useState("");
-    const [isDecaying, setIsDecaying] = useState(false);
+    const safeText = String(text || "").trim();
 
     useEffect(() => {
         let timeout;
         let index = 0;
         setDisplayText("");
 
+        if (!safeText) return;
+
         const typeWriter = () => {
-            if (index < text.length) {
-                setDisplayText(prev => prev + text[index]);
+            if (index < safeText.length) {
+                setDisplayText(safeText.slice(0, index + 1));
                 index++;
-                timeout = setTimeout(typeWriter, 30);
+                timeout = setTimeout(typeWriter, 20);
             }
         };
 
         typeWriter();
 
         return () => clearTimeout(timeout);
-    }, [text]);
-
-    const glitchChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+    }, [safeText]);
 
     return (
-        <div className={`font-mono ${className}`}>
+        <div className={`font-mono break-words whitespace-pre-wrap ${className}`}>
             {displayText.split("").map((char, i) => (
                 <motion.span
                     key={i}
-                    initial={{ opacity: 0, filter: "blur(4px)" }}
-                    animate={{ opacity: 1, filter: "blur(0px)" }}
-                    transition={{ duration: 0.2, delay: i * 0.01 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1 }}
                 >
-                    {char === " " ? "\u00A0" : char}
+                    {char}
                 </motion.span>
             ))}
             <motion.span
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ duration: 0.8, repeat: Infinity }}
-                className="inline-block w-2 h-4 bg-amber-500 ml-1 translate-y-0.5"
+                className="inline-block w-2 h-5 bg-[#FF9FFC] ml-1 align-middle shadow-[0_0_8px_#FF9FFC]"
             />
         </div>
     );

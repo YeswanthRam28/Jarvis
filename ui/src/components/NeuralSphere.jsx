@@ -56,7 +56,7 @@ const ParticleSphere = ({ status }) => {
 
 const NeuralSphere = ({ status }) => {
     return (
-        <div className="w-[500px] h-[500px] relative">
+        <div className="w-[400px] h-[400px] relative">
             <Canvas camera={{ position: [0, 0, 5], fov: 40 }}>
                 <ambientLight intensity={0.5} />
                 <ParticleSphere status={status} />
@@ -72,10 +72,6 @@ const NeuralSphere = ({ status }) => {
                 </mesh>
             </Canvas>
 
-            {/* Central Hex Overlay (optional) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-[#5227FF]/20 rotate-45 flex items-center justify-center">
-                <div className="w-24 h-24 border border-[#FF9FFC]/40 -rotate-45 animate-pulse" />
-            </div>
         </div>
     );
 };

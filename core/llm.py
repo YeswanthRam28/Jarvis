@@ -3,6 +3,7 @@ LLM Inference Engine
 Local LLM inference using llama-cpp-python with GGUF models
 """
 from typing import Optional, List, Dict, Any, Iterator, TYPE_CHECKING
+import re
 from pathlib import Path
 
 if TYPE_CHECKING:
@@ -150,7 +151,10 @@ class LLMEngine:
             # Extract text
             generated_text = response["choices"][0]["text"].strip()
             
-            # Update conversation history
+            # Post-process: Remove relevance scores or metrics often hallucinated by the model
+            generated_text = re.sub(r"\(relievance:.*?\)", "", generated_text, flags=re.IGNORECASE).strip()
+            # Also handle potentially common formatting issues
+            generated_text = generated_text.replace("..", ".").strip()
             self.conversation_history.append({"role": "user", "content": user_message})
             self.conversation_history.append({"role": "assistant", "content": generated_text})
             
@@ -210,6 +214,10 @@ class LLMEngine:
             
             # Update history
             generated_text = "".join(full_response).strip()
+            # Post-process streaming response for history and metadata updates
+            generated_text = re.sub(r"\(relievance:.*?\)", "", generated_text, flags=re.IGNORECASE).strip()
+            generated_text = generated_text.replace("..", ".").strip()
+            
             self.conversation_history.append({"role": "user", "content": user_message})
             self.conversation_history.append({"role": "assistant", "content": generated_text})
             

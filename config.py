@@ -64,6 +64,7 @@ class LLMConfig(BaseModel):
             "- Do NOT tell stories or invent scenarios\n"
             "- If using a tool, only state the direct result\n"
             "- Do NOT explain your reasoning or internal logic\n"
+            "- Do NOT include relevance scores or metrics like '(relievance: ...)'\n"
             "- If you don't know something, say so directly\n"
             "- Avoid multi-paragraph responses\n"
             "- Never repeat the words 'Assistant:', 'User:', or 'Output:' in your response"

@@ -1,12 +1,21 @@
 {
   "name": "jarvis-hud",
   "version": "1.0.0",
+  "description": "JARVIS - Advanced AI Assistant with HUD Interface",
+  "author": "YeswanthRam28",
   "main": "main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron": "wait-on http://localhost:5173 && electron ."
+    "start": "concurrently \"npm run dev\" \"npm run electron:dev\"",
+    "electron": "wait-on http://localhost:5173 && electron .",
+    "electron:dev": "wait-on http://localhost:5173 && electron .",
+    "electron:build": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --win --mac --linux",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@react-three/drei": "^9.121.0",
@@ -25,10 +34,49 @@
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.23",
+    "concurrently": "^8.2.2",
     "electron": "^25.0.1",
+    "electron-builder": "^24.13.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "vite": "^4.3.9",
     "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.jarvis.hud",
+    "productName": "JARVIS HUD",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility"
+    }
   }
 }

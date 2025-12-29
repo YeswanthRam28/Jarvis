@@ -25,6 +25,8 @@ from memory.memory_manager import MemoryManager
 from tools.registry import ToolRegistry
 from tools.system_tools import GetTimeTool, GetSystemInfoTool, CalculatorTool
 from tools.memory_tools import RememberTool, RecallTool, GetMemoryStatsTool
+from tools.webhooks.telegram import TelegramAlertTool
+from tools.system_actions import OpenAppTool, PlayMusicTool, VolumeUpTool, VolumeDownTool
 from utils.compatibility import apply_fixes
 from utils.audio import play_sound
 
@@ -114,6 +116,11 @@ class JARVIS:
             self.tool_registry.register(RememberTool(self.memory))
             self.tool_registry.register(RecallTool(self.memory))
             self.tool_registry.register(GetMemoryStatsTool(self.memory))
+            self.tool_registry.register(TelegramAlertTool())
+            self.tool_registry.register(OpenAppTool())
+            self.tool_registry.register(PlayMusicTool())
+            self.tool_registry.register(VolumeUpTool())
+            self.tool_registry.register(VolumeDownTool())
             
             logger.info(f"Registered {len(self.tool_registry.list_tools())} tools")
             

@@ -77,6 +77,44 @@ class IntentParser:
                 "intent": IntentType.TOOL_CALL,
                 "tool": "GetMemoryStatsTool",
                 "params": {}
+            },
+            
+            # Telegram Alert
+            r"(notify|alert|remind) me": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "TelegramAlertTool",
+                "params": {}
+            },
+            
+            # Application & Settings Control
+            r"(open|launch|show) (settings|system settings|control panel|bluetooth|wifi|network)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "OpenAppTool",
+                "params": {}
+            },
+            r"(open|launch) (.+)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "OpenAppTool",
+                "params": {}
+            },
+            
+            # Music Control
+            r"play (.+)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "PlayMusicTool",
+                "params": {}
+            },
+            
+            # Volume Control
+            r"(increase volume|volume up)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "VolumeUpTool",
+                "params": {}
+            },
+            r"(decrease volume|volume down)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "VolumeDownTool",
+                "params": {}
             }
         }
         
@@ -167,6 +205,23 @@ class IntentParser:
                 params["format"] = "date"
             else:
                 params["format"] = "full"
+        
+        elif tool_name == "TelegramAlertTool":
+            # Extract message to send
+            message = re.sub(r"(notify me that|notify me|alert me that|alert me|remind me that|remind me)", "", text, flags=re.IGNORECASE).strip()
+            # Clean up leading "that" or "to" if they persist
+            message = re.sub(r"^(that|to)\s+", "", message, flags=re.IGNORECASE).strip()
+            params["message"] = message
+            
+        elif tool_name == "OpenAppTool":
+            # Extract app name from phrases like "open settings" or "launch notepad"
+            app = re.sub(r"(open|launch|show)", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["app"] = app
+            
+        elif tool_name == "PlayMusicTool":
+            # Extract search query
+            query = re.sub(r"play", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["query"] = query
         
         return params
     

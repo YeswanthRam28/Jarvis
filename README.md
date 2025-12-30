@@ -133,11 +133,11 @@ cd ..
 
 ---
 
-## 📎 Screenshots / HUD (to add)
+## 📎 Screenshots / Demonstration
 
-* Holographic dashboard preview
-* Neural sphere panel
-* Thought‑stream logs
+  <img src="./images/landing.jpeg" width="800"/>
+  <img src="./images/explain.jpeg" width="800"/>
+  <img src="./images/open.jpeg" width="800"/>
 
 ---
 

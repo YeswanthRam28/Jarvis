@@ -144,8 +144,6 @@ cd ..
 ## 📄 Operational License
 Distributed under the MIT License. See LICENSE for more information.
 
----
-
 `
 Designed with precision. Built for intelligence.
 `

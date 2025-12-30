@@ -1,117 +1,149 @@
-# JARVIS 🛰️🌌🧡
-### Just A Rather Very Intelligent System
+# 🛰️ JARVIS — Fully Local AI Assistant
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.10+](https://img.shields.io/badge/Python-3.10+-5227FF.svg)](https://www.python.org/)
-[![React: FUI](https://img.shields.io/badge/UI-Holographic_FUI-FF9FFC.svg)](https://react.dev/)
+<div align="center">
 
-A production-ready, offline AI assistant featuring a high-fidelity **Synthwave Holographic HUD**. JARVIS combines local LLM inference, long-term semantic memory, and a cinematic interface to provide a truly immersive AI experience—all running 100% locally on your hardware.
+![Status](https://img.shields.io/badge/Mode-Fully%20Offline-success?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge)
+![Local LLM](https://img.shields.io/badge/LLM-phi2%20%2F%20GGUF-purple?style=for-the-badge)
+![UI](https://img.shields.io/badge/UI-Holographic_FUI-pink?style=for-the-badge)
 
----
+**"A voice-controlled AI system that lives inside your laptop — listens continuously, understands speech, remembers context, controls your computer, and talks back. All offline."**
 
-## ✨ Features
-
-- **Holographic FUI (Futuristic UI)**: A stunning Synthwave-themed dashboard built with React, Three.js, and Framer Motion.
-- **Always-on Voice Core**: Real-time microphone listening with high-precision Voice Activity Detection (VAD).
-- **Private & Offline**: 
-  - **Speech-to-Text**: High-accuracy transcription via OpenAI Whisper.
-  - **LLM Brain**: Local inference via `llama-cpp-python` (GGUF support).
-  - **Neural TTS**: Natural-sounding speech generation via Coqui TTS.
-- **Semantic Cortex**: Long-term memory system using FAISS vector clustering and sentence-transformers for infinite context retrieval.
-- **Extensible Toolbelt**: Custom plugin system allowing JARVIS to control your system, perform calculations, and manage its own memory.
-- **Liquid Ether Physics**: Dynamic, interactive fluid-background that responds to your presence and AI thought processes.
+</div>
 
 ---
 
-## 🏗️ System Architecture
+## 🧭 What Is Jarvis?
 
-```text
-Jarvis/
-├── main.py                    # Neural Orchestrator (Backend)
-├── config.py                  # System Parameters
-├── ui/                        # Holographic HUD (Frontend)
-│   ├── src/pages/             # Activation Portal & Battle-Bridge
-│   └── src/components/        # NeuralSphere, LiquidEther, HexCore
-├── core/                      # Cognitive Modules (STT, LLM, TTS)
-├── memory/                    # Semantic Vector Storage
-└── tools/                     # Operational Extensions
+Jarvis is a **fully-local AI automation system** built to behave like a personal digital operator. It runs **100% offline**, continuously listens for voice, converts speech to text, extracts intent, retrieves past memory, executes tools on your machine, and responds back with speech.
+
+Unlike Alexa or Siri — Jarvis **does not depend on cloud**, does **not** send data anywhere, and **can actually control your PC**.
+
+---
+
+## 🎥 What Makes It Different
+
+| Capability                     | Exists in Voice Assistants | Exists in Jarvis                        |
+| ------------------------------ | -------------------------- | --------------------------------------- |
+| Offline execution              | No                         | Yes                                     |
+| Local speech-to-text           | Partially                  | Yes (Whisper CPU)                       |
+| Long‑term memory               | No                         | Yes (FAISS vector DB)                   |
+| Execute OS‑level commands      | Limited                    | Yes — open apps, volume, music, scripts |
+| Continuous background listener | Yes                        | Yes                                     |
+| Hackable / Extendable          | No                         | Yes (plugin toolbelt)                   |
+
+---
+
+## 🧬 Core System Flow
+
+```
+🎤 Microphone (always listening)
+        ↓
+🧏 Whisper STT → Text
+        ↓
+🧠 Intent Parser → Tool Router
+        ↓
+🔧 Tools (open apps, music, system commands)
+        ↓
+🧠 Local LLM (phi‑2‑GGUF via llama‑cpp)
+        ↓
+📝 Memory Engine (FAISS)
+        ↓
+🔊 Coqui‑TTS → Spoken audio reply
 ```
 
 ---
 
-## 🚀 Deployment Instructions
+## 🏗️ Architecture Diagram
 
-### 1. Initialize Neural Environment
+```mermaid
+graph TD
+A[Microphone Listener] --> B[Whisper STT]
+B --> C[Intent Parser]
+C --> D[Tool Router]
+D --> E[System Tools]
+C --> F[Local LLM - phi2 via llama cpp]
+F --> G[Response]
+G --> H[Coqui-TTS]
+G --> I[FAISS Vector Memory]
+```
 
-```powershell
-# Clone the repository
+---
+
+## 🧰 Major Components
+
+### Voice + Speech Layer
+
+* Whisper STT — CPU inference, high accuracy
+* VAD — continuous background listening
+
+### Brain Layer
+
+* LLM — phi‑2‑GGUF via llama‑cpp
+* Intent extraction → decides what Jarvis should do next
+
+### Memory Layer
+
+* FAISS vector DB → remembers context intelligently
+
+### Action Layer
+
+Tools capable of:
+
+* Opening apps (Chrome, calculator, Bluetooth panel, etc.)
+* Playing YouTube music
+* Adjusting system volume
+* Triggering Telegram automations
+* Executing OS commands (PowerShell)
+
+---
+
+## 🚀 How to Run
+
+### Backend Setup
+
+```bash
 git clone https://github.com/YeswanthRam28/Jarvis.git
 cd Jarvis
-
-# Setup Backend Environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+venv/Scripts/activate
 pip install -r requirements.txt
-
-# Setup HUD Dependencies
-cd ui
-npm install
 ```
 
-### 2. Configure Neural Links
+### Frontend HUD
 
-1. Create a `.env` file from the template:
-   ```powershell
-   Copy-Item .env.template .env
-   ```
-2. Download a GGUF model (e.g., Mistral-7B, Llama-3) and place it in `models/llm/`.
-3. Update `JARVIS_LLM_MODEL_PATH` in your `.env` to point to your model.
-
-### 3. Ignition
-
-Launch the full experience (Backend + HUD) with one command:
-```powershell
+```bash
+cd ui
+npm install
+cd ..
 ./run_hud.ps1
 ```
 
 ---
 
-## 🛰️ Holographic HUD Operations
+## 🧾 Example Commands You Can Speak
 
-The interface consists of three primary security layers:
-
-1. **Activation Portal**: The system's "resting" state. Energy fields (Liquid Ether) flow at baseline levels.
-2. **Security Check (Auth)**: RSA-256 encrypted biometric cipher entry for system access.
-3. **Command Bridge (HUD)**: 
-   - **Neural Sphere**: Real-time visualization of the AI's internal thought state.
-   - **Telemetry Pods**: Live tracking of neural sync, core load, and system stability.
-   - **Cortex Stream**: Scrolling digital logs of all background system operations.
-   - **Digital Decay**: Holographic text materialization with digital materialization effects.
+```
+"Hey Jarvis, open Spotify"
+"Turn volume down"
+"Play Interstellar soundtrack"
+"Launch calculator"
+"Send message to Telegram bot"
+```
 
 ---
 
-## 🧩 Advanced Customization
+## 📎 Screenshots / HUD (to add)
 
-### Modifying the HUD Palette
-Update `ui/src/index.css` variables to shift the system's aesthetic:
-```css
-:root {
-  --fui-primary: #5227FF;   /* Primary Glow */
-  --fui-secondary: #FF9FFC; /* Accent Glow */
-  --fui-tertiary: #B19EEF;  /* Sub-Glow */
-}
-```
-
-### Extending Tools
-Extend the `BaseTool` class in `tools/` to give JARVIS new capabilities (e.g., controlling IoT devices, web searching, or specific localized tasks).
+* Holographic dashboard preview
+* Neural sphere panel
+* Thought‑stream logs
 
 ---
 
 ## 📄 Operational License
+Distributed under the MIT License. See LICENSE for more information.
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
----
-
-**Designed with precision. Built for intelligence.**  
-Developed by [Yeswanth Ram](https://github.com/YeswanthRam28) 🧑‍💻✨
+`
+Designed with precision. Built for intelligence.
+`

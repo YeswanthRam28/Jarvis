@@ -41,13 +41,13 @@ const CornerBracket = ({ position }) => {
 };
 
 const HUD = () => {
-    const { status, transcription, response, state, sendCommand, backendIp, updateBackendIp, telemetry } = useJarvis();
+    const { status, transcription, response, state, sendCommand, backendUrl, updateBackendUrl, telemetry } = useJarvis();
     const [logs, setLogs] = useState([]);
 
-    const handleIpChange = () => {
-        const newIp = prompt('Enter Backend IP Address:', backendIp);
-        if (newIp && newIp !== backendIp) {
-            updateBackendIp(newIp);
+    const handleUrlChange = () => {
+        const newUrl = prompt('Enter Backend URL (e.g., https://your-app.ngrok-free.app or http://localhost:8000):', backendUrl);
+        if (newUrl && newUrl !== backendUrl) {
+            updateBackendUrl(newUrl);
         }
     };
 
@@ -95,9 +95,9 @@ const HUD = () => {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    onClick={handleIpChange}
+                    onClick={handleUrlChange}
                     className="hologram-panel p-4 flex gap-8 items-center border-[#5227FF]/30 cursor-pointer hover:border-[#5227FF]/60 transition-colors"
-                    title="Click to change Backend IP"
+                    title="Click to change Backend URL"
                 >
                     <div className="flex flex-col items-end">
                         <span className="fui-label-mini">Auth_Level</span>
@@ -106,7 +106,7 @@ const HUD = () => {
                     <div className="w-[2px] h-8 bg-[#5227FF]/20" />
                     <div className="flex flex-col items-center gap-1">
                         <Wifi size={16} className={`${status === 'offline' ? 'text-red-500' : 'text-[#FF9FFC]'} fui-anim-pulse`} />
-                        <span className="text-[8px] font-mono opacity-50 uppercase">{backendIp}</span>
+                        <span className="text-[8px] font-mono opacity-50 uppercase max-w-[200px] truncate" title={backendUrl}>{backendUrl}</span>
                     </div>
                 </motion.div>
             </div>

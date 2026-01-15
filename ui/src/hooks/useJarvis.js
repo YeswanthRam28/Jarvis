@@ -1,78 +1,205 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
+/**
+ * Custom hook to manage Jarvis backend connection via WebSocket
+ * Handles voice transcription, AI responses, system telemetry, and commands
+ */
 export const useJarvis = () => {
-    const [socket, setSocket] = useState(null);
-    const [status, setStatus] = useState('idle');
+    const [status, setStatus] = useState('offline'); // 'offline' | 'idle' | 'listening' | 'processing'
     const [transcription, setTranscription] = useState('');
     const [response, setResponse] = useState('');
-    const [state, setState] = useState({ awaiting_command: true });
-    const [telemetry, setTelemetry] = useState({ cpu: 0, memory: 0, active_mem: '0GB', total_mem: '0GB' });
-    const [backendIp, setBackendIp] = useState(localStorage.getItem('jarvis_backend_ip') || 'localhost');
+    const [state, setState] = useState({});
+    const [backendUrl, setBackendUrl] = useState(() => {
+        return localStorage.getItem('jarvis_backend_url') || 'http://localhost:8000';
+    });
+    const [telemetry, setTelemetry] = useState({
+        cpu: 0,
+        memory: 0,
+        active_mem: '0GB',
+        total_mem: '0GB'
+    });
 
-    useEffect(() => {
-        const wsUrl = `ws://${backendIp}:8000/ws`;
-        const ws = new WebSocket(wsUrl);
+    const wsRef = useRef(null);
+    const reconnectTimeoutRef = useRef(null);
+    const reconnectAttempts = useRef(0);
+    const maxReconnectAttempts = 10;
 
-        ws.onopen = () => {
-            console.log(`Connected to JARVIS Backend at ${backendIp}`);
-            setStatus('idle');
-        };
+    // WebSocket connection management
+    const connect = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            return;
+        }
 
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
+        try {
+            // Convert HTTP/HTTPS URL to WebSocket URL
+            let wsUrl;
+            if (backendUrl.startsWith('http://') || backendUrl.startsWith('https://')) {
+                wsUrl = backendUrl.replace(/^http/, 'ws') + '/ws';
+            } else if (backendUrl.startsWith('ws://') || backendUrl.startsWith('wss://')) {
+                wsUrl = backendUrl + '/ws';
+            } else {
+                // Default to ws:// if no protocol specified
+                wsUrl = `ws://${backendUrl}/ws`;
+            }
 
-            switch (message.type) {
-                case 'status':
-                    setStatus(message.data);
-                    if (message.data === 'processing') {
-                        setTranscription('');
-                        setResponse('');
+            console.log(`[Jarvis] Connecting to ${wsUrl}...`);
+
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('[Jarvis] WebSocket connected');
+                setStatus('idle');
+                reconnectAttempts.current = 0;
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('[Jarvis] Received:', data);
+
+                    // Handle different message types
+                    switch (data.type) {
+                        case 'status':
+                            setStatus(data.status || 'idle');
+                            break;
+
+                        case 'transcription':
+                            setTranscription(data.text || '');
+                            break;
+
+                        case 'response':
+                            setResponse(data.text || '');
+                            // Clear response after 10 seconds
+                            setTimeout(() => setResponse(''), 10000);
+                            break;
+
+                        case 'state':
+                            setState(data.state || {});
+                            break;
+
+                        case 'telemetry':
+                            setTelemetry({
+                                cpu: data.cpu || 0,
+                                memory: data.memory || 0,
+                                active_mem: data.active_mem || '0GB',
+                                total_mem: data.total_mem || '0GB'
+                            });
+                            break;
+
+                        case 'listening':
+                            setStatus('listening');
+                            break;
+
+                        case 'processing':
+                            setStatus('processing');
+                            break;
+
+                        case 'idle':
+                            setStatus('idle');
+                            setTranscription('');
+                            break;
+
+                        default:
+                            console.log('[Jarvis] Unknown message type:', data.type);
                     }
-                    break;
-                case 'transcription':
-                    setTranscription(message.data);
-                    break;
-                case 'response':
-                    setResponse(message.data);
-                    break;
-                case 'state':
-                    setState(message.data);
-                    break;
-                case 'telemetry':
-                    setTelemetry(message.data);
-                    break;
-                default:
-                    break;
+                } catch (error) {
+                    console.error('[Jarvis] Error parsing message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('[Jarvis] WebSocket error:', error);
+                setStatus('offline');
+            };
+
+            ws.onclose = () => {
+                console.log('[Jarvis] WebSocket disconnected');
+                setStatus('offline');
+                wsRef.current = null;
+
+                // Attempt to reconnect
+                if (reconnectAttempts.current < maxReconnectAttempts) {
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+                    console.log(`[Jarvis] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+
+                    reconnectTimeoutRef.current = setTimeout(() => {
+                        reconnectAttempts.current += 1;
+                        connect();
+                    }, delay);
+                } else {
+                    console.error('[Jarvis] Max reconnection attempts reached');
+                }
+            };
+
+            wsRef.current = ws;
+        } catch (error) {
+            console.error('[Jarvis] Connection error:', error);
+            setStatus('offline');
+        }
+    }, [backendUrl]);
+
+    // Send command to backend
+    const sendCommand = useCallback((type, command, params = {}) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            const message = {
+                type,
+                command,
+                ...params
+            };
+            console.log('[Jarvis] Sending:', message);
+            wsRef.current.send(JSON.stringify(message));
+        } else {
+            console.error('[Jarvis] WebSocket not connected');
+        }
+    }, []);
+
+    // Update backend URL
+    const updateBackendUrl = useCallback((newUrl) => {
+        setBackendUrl(newUrl);
+        localStorage.setItem('jarvis_backend_url', newUrl);
+
+        // Close existing connection and reconnect
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+        reconnectAttempts.current = 0;
+    }, []);
+
+    // Connect on mount and when backend IP changes
+    useEffect(() => {
+        connect();
+
+        // Cleanup on unmount
+        return () => {
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+            }
+            if (wsRef.current) {
+                wsRef.current.close();
             }
         };
+    }, [connect]);
 
-        ws.onerror = (error) => {
-            console.error('WebSocket Error:', error);
-            setStatus('offline');
-        };
+    // Periodically request telemetry
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+                sendCommand('get_telemetry');
+            }
+        }, 2000); // Request telemetry every 2 seconds
 
-        ws.onclose = () => {
-            console.log('Disconnected from JARVIS Backend');
-            setStatus('offline');
-        };
+        return () => clearInterval(interval);
+    }, [sendCommand]);
 
-        setSocket(ws);
-
-        return () => {
-            ws.close();
-        };
-    }, [backendIp]);
-
-    const updateBackendIp = (ip) => {
-        localStorage.setItem('jarvis_backend_ip', ip);
-        setBackendIp(ip);
+    return {
+        status,
+        transcription,
+        response,
+        state,
+        sendCommand,
+        backendUrl,
+        updateBackendUrl,
+        telemetry,
+        isConnected: wsRef.current?.readyState === WebSocket.OPEN
     };
-
-    const sendCommand = useCallback((type, data) => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type, data }));
-        }
-    }, [socket]);
-
-    return { status, transcription, response, state, sendCommand, backendIp, updateBackendIp, telemetry };
 };

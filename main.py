@@ -26,7 +26,7 @@ from tools.registry import ToolRegistry
 from tools.system_tools import GetTimeTool, GetSystemInfoTool, CalculatorTool
 from tools.memory_tools import RememberTool, RecallTool, GetMemoryStatsTool
 from tools.webhooks.telegram import TelegramAlertTool
-from tools.system_actions import OpenAppTool, PlayMusicTool, VolumeUpTool, VolumeDownTool
+from tools.system_actions import OpenAppTool, PlayMusicTool, VolumeUpTool, VolumeDownTool, WorkSpaceAutomationTool
 from utils.compatibility import apply_fixes
 from utils.audio import play_sound
 
@@ -121,6 +121,7 @@ class JARVIS:
             self.tool_registry.register(PlayMusicTool())
             self.tool_registry.register(VolumeUpTool())
             self.tool_registry.register(VolumeDownTool())
+            self.tool_registry.register(WorkSpaceAutomationTool())
             
             logger.info(f"Registered {len(self.tool_registry.list_tools())} tools")
             

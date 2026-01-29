@@ -87,6 +87,11 @@ desktop.ini
 .Spotlight-V100
 .Trashes
 
+# Agent / Test files
+test_*.py
+.agent/
+.gemini/
+
 # Temporary files
 *.tmp
 *.temp

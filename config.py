@@ -27,7 +27,7 @@ class AudioConfig(BaseModel):
     sample_rate: int = Field(default=16000, description="Audio sample rate in Hz")
     channels: int = Field(default=1, description="Number of audio channels")
     chunk_duration_ms: int = Field(default=30, description="Audio chunk duration in milliseconds")
-    vad_threshold: float = Field(default=0.02, description="Voice activity detection threshold (0-1)")
+    vad_threshold: float = Field(default=0.05, description="Voice activity detection threshold (0-1)")
     silence_duration_ms: int = Field(default=1000, description="Silence duration to end speech in ms")
     device_index: Optional[int] = Field(default=None, description="Audio device index (None = default)")
 

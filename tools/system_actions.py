@@ -6,7 +6,12 @@ import os
 import webbrowser
 import subprocess
 import keyboard
-from typing import List
+import pywintypes
+import win32gui
+import win32con
+import win32api
+import time
+from typing import List, Optional, Any
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from comtypes import CLSCTX_ALL
 from ctypes import cast, POINTER
@@ -35,8 +40,24 @@ class OpenAppTool(BaseTool):
             )
         ]
 
+    def _find_start_app(self, app_name: str) -> Optional[str]:
+        """Finds an app in the Windows Start Apps list (Shell:AppsFolder)"""
+        try:
+            # Use PowerShell to get list of apps
+            cmd = f'Get-StartApps | Where-Object {{ $_.Name -like "*{app_name}*" }} | Select-Object -ExpandProperty AppID'
+            result = subprocess.run(["powershell", "-Command", cmd], capture_output=True, text=True, check=False)
+            
+            if result.returncode == 0 and result.stdout.strip():
+                # Get the first match
+                app_id = result.stdout.strip().split("\n")[0].strip()
+                logger.info(f"Found {app_name} in Start Apps list: {app_id}")
+                return app_id
+        except Exception as e:
+            logger.debug(f"Search via Get-StartApps failed: {e}")
+        return None
+
     def _find_executable(self, app: str) -> str:
-        """Finds the full path of an executable dynamically"""
+        """Finds the full path of an executable dynamically (Fallback method)"""
         # 1. Try WHERE.exe (fastest way to find apps in PATH)
         try:
             result = subprocess.run(["where", app], capture_output=True, text=True, check=False)
@@ -114,23 +135,35 @@ class OpenAppTool(BaseTool):
                 os.system(f"start {target}")
                 return ToolResult(success=True, result=f"Opening {app_raw}")
             
-            # 3. Dynamic search for the executable
+            # 3. New Primary Method: Search via Windows Start Apps (Shell:AppsFolder)
+            # This handles Store apps, system apps, and most desktop apps
+            app_id = self._find_start_app(target)
+            if not app_id and target != app_lower:
+                # If alias failed, try original name
+                app_id = self._find_start_app(app_lower)
+                
+            if app_id:
+                logger.info(f"Launching via AppID: {app_id}")
+                # Launching via shell:AppsFolder is the most reliable way for these shortcuts
+                os.system(f'explorer.exe shell:AppsFolder\\{app_id}')
+                return ToolResult(success=True, result=f"Opening {app_raw}")
+            
+            # 4. Fallback: Dynamic search for the executable on disk
             exe_path = self._find_executable(target)
             
             if exe_path:
                 logger.info(f"Launching found executable: {exe_path}")
-                # Use start to avoid blocking and handle shell issues
                 os.system(f'start "" "{exe_path}"')
                 return ToolResult(success=True, result=f"Opening {app_raw}")
             
-            # 4. Fallback: Try running directly in shell as a last resort
+            # 5. Fallback: Try running directly in shell as a last resort
             logger.info(f"App not found in search, trying direct shell start: {target}")
             exit_code = os.system(f"start {target}")
             
             if exit_code == 0:
                 return ToolResult(success=True, result=f"Attempting to launch {app_raw}")
             
-            # 5. Ultimate Fallback: Search web for download
+            # 6. Ultimate Fallback: Search web for download
             logger.warning(f"Failed to find or launch {app_raw}. Opening web search.")
             search_url = f"https://www.google.com/search?q=download+{app_raw.replace(' ', '+')}"
             webbrowser.open(search_url)
@@ -232,3 +265,84 @@ class VolumeDownTool(BaseTool):
             except Exception as e2:
                 logger.error(f"Pycaw fallback failed: {e2}")
                 return ToolResult(success=False, error="Could not decrease volume")
+
+
+class WorkSpaceAutomationTool(BaseTool):
+    """Automates workspace setup (Instagram, GitHub, ChatGPT)"""
+    
+    @property
+    def description(self) -> str:
+        return "Sets up a workspace with Instagram (Left), GitHub (Top Right), and ChatGPT (Bottom Right)"
+
+    @property
+    def parameters(self) -> List[ToolParameter]:
+        return []
+
+    def _find_window_by_substring(self, substring: str):
+        def callback(hwnd, windows):
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if substring.lower() in title.lower():
+                    windows.append(hwnd)
+        
+        windows = []
+        win32gui.EnumWindows(callback, windows)
+        # Return the most recently active one if multiple found
+        return windows[0] if windows else None
+
+    def execute(self, **kwargs) -> ToolResult:
+        try:
+            # Monitor Info
+            width = win32api.GetSystemMetrics(0)
+            height = win32api.GetSystemMetrics(1)
+            
+            # Start apps using their Windows AppIDs
+            targets = [
+                {"name": "Instagram", "id": "Facebook.InstagramBeta_8xx8rvfyw5nnt!App"},
+                {"name": "GitHub", "id": "github.com-8B11BEB2_2t1n1bqhyggy0!App"},
+                {"name": "ChatGPT", "id": "OpenAI.ChatGPT-Desktop_2p2nqsd0c76g0!ChatGPT"}
+            ]
+            
+            for target in targets:
+                logger.info(f"Launching workspace app: {target['name']}")
+                # Using the Shell:AppsFolder method which is universal for Windows Apps
+                os.system(f'explorer.exe shell:AppsFolder\\{target["id"]}')
+                time.sleep(1.5) # Wait for launch
+            
+            # Give windows time to initialize and set titles
+            logger.info("Waiting for windows to stabilize...")
+            time.sleep(5) 
+            
+            # Position Layout:
+            # 1. Instagram -> Left Half
+            hwnd_ig = self._find_window_by_substring("Instagram")
+            if hwnd_ig:
+                logger.info(f"Tiling Instagram (HWND: {hwnd_ig})")
+                win32gui.ShowWindow(hwnd_ig, win32con.SW_RESTORE)
+                win32gui.SetWindowPos(hwnd_ig, win32con.HWND_TOP, 0, 0, width // 2, height, win32con.SWP_SHOWWINDOW)
+            else:
+                logger.warning("Could not find Instagram window")
+
+            # 2. GitHub -> Top Right
+            # Note: GitHub Desktop title is often "GitHub Desktop"
+            hwnd_gh = self._find_window_by_substring("GitHub")
+            if hwnd_gh:
+                logger.info(f"Tiling GitHub (HWND: {hwnd_gh})")
+                win32gui.ShowWindow(hwnd_gh, win32con.SW_RESTORE)
+                win32gui.SetWindowPos(hwnd_gh, win32con.HWND_TOP, width // 2, 0, width // 2, height // 2, win32con.SWP_SHOWWINDOW)
+            else:
+                logger.warning("Could not find GitHub window")
+
+            # 3. ChatGPT -> Bottom Right
+            hwnd_gpt = self._find_window_by_substring("ChatGPT")
+            if hwnd_gpt:
+                logger.info(f"Tiling ChatGPT (HWND: {hwnd_gpt})")
+                win32gui.ShowWindow(hwnd_gpt, win32con.SW_RESTORE)
+                win32gui.SetWindowPos(hwnd_gpt, win32con.HWND_TOP, width // 2, height // 2, width // 2, height // 2, win32con.SWP_SHOWWINDOW)
+            else:
+                logger.warning("Could not find ChatGPT window")
+            
+            return ToolResult(success=True, result="Workspace automation complete.")
+        except Exception as e:
+            logger.error(f"Workspace automation failed: {e}")
+            return ToolResult(success=False, error=str(e))

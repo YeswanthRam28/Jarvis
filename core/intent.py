@@ -58,6 +58,13 @@ class IntentParser:
                 "params": {}
             },
             
+            # Workspace Automation
+            r"workspca|setup workspace|open workspace|workspace": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "WorkSpaceAutomationTool",
+                "params": {}
+            },
+            
             # Memory storage
             r"remember (that|this)|store (this|that)|save (this|that)": {
                 "intent": IntentType.MEMORY_STORE,

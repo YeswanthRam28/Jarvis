@@ -72,6 +72,7 @@ data/recordings/
 ui/node_modules/
 ui/dist/
 ui/dist-ssr/
+ui/release/
 ui/*.local
 ui/npm-debug.log*
 ui/yarn-debug.log*

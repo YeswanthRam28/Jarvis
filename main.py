@@ -161,6 +161,8 @@ class JARVIS:
             
             if not user_text:
                 logger.warning("No speech detected")
+                if self.on_update:
+                    self.on_update({"type": "status", "data": "idle"})
                 return
             
             # Check for exit command
@@ -222,6 +224,8 @@ class JARVIS:
             
             # 5. Generate LLM response
             logger.info("Generating response...")
+            if self.on_update:
+                self.on_update({"type": "status", "data": "processing"})
             
             # Build context
             context_parts = []
@@ -238,6 +242,9 @@ class JARVIS:
                 context=context,
                 max_tokens=self.config.llm.max_tokens
             )
+            
+            if not response:
+                response = "I apologize, but I couldn't generate a response at the moment."
             
             logger.info(f"Assistant response: '{response}'")
             self.conversation.add_message("assistant", response)

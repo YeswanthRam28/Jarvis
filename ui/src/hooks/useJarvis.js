@@ -60,29 +60,30 @@ export const useJarvis = () => {
                     // Handle different message types
                     switch (data.type) {
                         case 'status':
-                            setStatus(data.status || 'idle');
+                            setStatus(data.data || 'idle');
                             break;
 
                         case 'transcription':
-                            setTranscription(data.text || '');
+                            setTranscription(data.data || '');
                             break;
 
                         case 'response':
-                            setResponse(data.text || '');
-                            // Clear response after 10 seconds
-                            setTimeout(() => setResponse(''), 10000);
+                            setResponse(data.data || '');
+                            // Clear response after 15 seconds (increased from 10)
+                            setTimeout(() => setResponse(''), 15000);
                             break;
 
                         case 'state':
-                            setState(data.state || {});
+                            setState(data.data || {});
                             break;
 
                         case 'telemetry':
+                            const t = data.data || {};
                             setTelemetry({
-                                cpu: data.cpu || 0,
-                                memory: data.memory || 0,
-                                active_mem: data.active_mem || '0GB',
-                                total_mem: data.total_mem || '0GB'
+                                cpu: t.cpu || 0,
+                                memory: t.memory || 0,
+                                active_mem: t.active_mem || '0GB',
+                                total_mem: t.total_mem || '0GB'
                             });
                             break;
 

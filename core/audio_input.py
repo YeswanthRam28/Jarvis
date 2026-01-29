@@ -7,6 +7,7 @@ import sounddevice as sd
 from typing import Optional, Callable
 from collections import deque
 from threading import Thread, Event
+from queue import Queue
 import time
 
 from utils.logger import get_logger
@@ -46,6 +47,8 @@ class AudioInput:
         # Threading
         self.stop_event = Event()
         self.listen_thread: Optional[Thread] = None
+        self.processing_queue = Queue()
+        self.worker_thread: Optional[Thread] = None
         
         # Callback for when speech is detected
         self.on_speech_detected: Optional[Callable[[np.ndarray], None]] = None
@@ -130,9 +133,9 @@ class AudioInput:
                 if self.speech_buffer:
                     speech_audio = np.concatenate(self.speech_buffer)
                     
-                    # Call callback if registered
+                    # Queue audio for processing in worker thread
                     if self.on_speech_detected:
-                        self.on_speech_detected(speech_audio)
+                        self.processing_queue.put(speech_audio)
                 
                 # Clear buffer
                 self.speech_buffer = []
@@ -165,7 +168,35 @@ class AudioInput:
         )
         
         self.stream.start()
+        
+        # Start worker thread
+        self.worker_thread = Thread(target=self._worker, daemon=True)
+        self.worker_thread.start()
+        
         logger.info("Audio input stream started")
+    
+    def _worker(self) -> None:
+        """Background worker to process audio detection without blocking stream"""
+        logger.debug("Audio worker thread started")
+        while not self.stop_event.is_set():
+            try:
+                # Wait for audio data from queue
+                from queue import Empty
+                try:
+                    audio_data = self.processing_queue.get(timeout=0.5)
+                except Empty:
+                    continue
+                
+                # Execute callback
+                if self.on_speech_detected:
+                    try:
+                        self.on_speech_detected(audio_data)
+                    except Exception as e:
+                        logger.error(f"Error in audio callback: {e}")
+                
+                self.processing_queue.task_done()
+            except Exception as e:
+                logger.error(f"Error in audio worker: {e}")
     
     def stop(self) -> None:
         """Stop listening for audio"""

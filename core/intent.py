@@ -52,7 +52,7 @@ class IntentParser:
             },
             
             # Calculator
-            r"calculate|compute|what is \d+": {
+            r"(calculate|compute|what is|how much is) \d+|(\d+ [\+\-\*\/] \d+)": {
                 "intent": IntentType.TOOL_CALL,
                 "tool": "CalculatorTool",
                 "params": {}
@@ -183,7 +183,7 @@ class IntentParser:
             # Extract mathematical expression
             # Remove common phrases
             expr = text.lower()
-            expr = re.sub(r"(calculate|compute|what is|what's)", "", expr).strip()
+            expr = re.sub(r"(calculate|compute|what is|what's|how much is)", "", expr).strip()
             params["expression"] = expr
         
         elif tool_name == "RememberTool":

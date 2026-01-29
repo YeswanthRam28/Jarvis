@@ -79,27 +79,49 @@ class LLMEngine:
             Formatted prompt string
         """
         system = system_prompt or self.config.system_prompt
+        model_name = self.config.model_path.name.lower()
         
-        # Build prompt with Instruct format (optimized for Phi-2)
-        prompt_parts = [f"Instruct: {system}\n"]
+        # Check for Llama 3 model family
+        is_llama3 = "llama-3" in model_name or "llama3" in model_name
         
-        # Add context if provided
-        if context:
-            prompt_parts.append(f"Context: {context}\n")
-        
-        # Add conversation history
-        if include_history and self.conversation_history:
-            prompt_parts.append("History:\n")
-            for msg in self.conversation_history[-self.config.context_size:]:
-                role = msg["role"].capitalize()
-                content = msg["content"]
-                prompt_parts.append(f"{role}: {content}\n")
-        
-        # Add current user message
-        prompt_parts.append(f"User: {user_message}\n")
-        prompt_parts.append("Output:")
-        
-        return "".join(prompt_parts)
+        if is_llama3:
+            # Llama 3 Format
+            prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system}"
+            
+            if context:
+                prompt += f"\n\nContext information:\n{context}"
+                
+            prompt += "<|eot_id|>"
+            
+            # Add history
+            if include_history:
+                valid_history = [m for m in self.conversation_history if m.get("content")]
+                for msg in valid_history[-5:]:
+                    role = "user" if msg["role"] == "user" else "assistant"
+                    prompt += f"<|start_header_id|>{role}<|end_header_id|>\n\n{msg['content']}<|eot_id|>"
+            
+            # Add current message
+            prompt += f"<|start_header_id|>user<|end_header_id|>\n\n{user_message}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+            return prompt
+            
+        else:
+            # Default/Phi-2 Instruct format
+            instruction = f"{system}\n\n"
+            
+            if context:
+                instruction += f"Context information:\n{context}\n\n"
+                
+            if include_history:
+                valid_history = [m for m in self.conversation_history if m.get("content")]
+                if valid_history:
+                    instruction += "Previous conversation:\n"
+                    for msg in valid_history[-5:]:
+                        role = "User" if msg["role"] == "user" else "Assistant"
+                        instruction += f"{role}: {msg['content']}\n"
+                    instruction += "\n"
+                
+            instruction += f"Question: {user_message}"
+            return f"Instruct: {instruction}\nOutput:"
     
     def generate(
         self,
@@ -129,27 +151,28 @@ class LLMEngine:
         
         # Build prompt
         prompt = self._build_prompt(user_message, system_prompt, context)
+        logger.debug(f"LLM Prompt:\n{prompt}")
         
         # Generation parameters
         max_tokens = max_tokens or self.config.max_tokens
         temperature = temperature or self.config.temperature
         
-        logger.debug(f"Generating response: max_tokens={max_tokens}, temp={temperature}")
-        
         try:
             # Generate
-            response = self.model(
+            stop_tokens = ["User:", "Assistant:", "Instruct:", "Output:"]
+            if "llama" in self.config.model_path.name.lower():
+                stop_tokens.extend(["<|eot_id|>", "<|end_of_text|>"])
+                
+            raw_response = self.model(
                 prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                top_p=self.config.top_p,
-                top_k=self.config.top_k,
-                stop=["User:", "Assistant:", "Instruct:", "Output:", "History:"],
+                stop=stop_tokens,
                 echo=False
             )
             
             # Extract text
-            generated_text = response["choices"][0]["text"].strip()
+            generated_text = raw_response["choices"][0]["text"].strip()
             
             # Post-process: Remove relevance scores or metrics often hallucinated by the model
             generated_text = re.sub(r"\(relievance:.*?\)", "", generated_text, flags=re.IGNORECASE).strip()
@@ -199,13 +222,15 @@ class LLMEngine:
         try:
             full_response = []
             
+            stop_tokens = ["User:", "Assistant:", "Instruct:", "Output:"]
+            if "llama" in self.config.model_path.name.lower():
+                stop_tokens.extend(["<|eot_id|>", "<|end_of_text|>"])
+                
             for output in self.model(
                 prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                top_p=self.config.top_p,
-                top_k=self.config.top_k,
-                stop=["User:", "Assistant:", "Instruct:", "Output:", "History:"],
+                stop=stop_tokens,
                 stream=True
             ):
                 chunk = output["choices"][0]["text"]

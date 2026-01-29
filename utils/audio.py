@@ -4,7 +4,7 @@ Audio utility functions for playback and recording
 from pathlib import Path
 import sounddevice as sd
 import numpy as np
-import torchaudio
+import librosa
 from utils.logger import get_logger
 
 logger = get_logger("jarvis.utils.audio")
@@ -24,13 +24,15 @@ def play_sound(file_path: Path) -> bool:
         return False
         
     try:
-        # Load audio file
-        waveform, sample_rate = torchaudio.load(str(file_path))
+        # Load audio file using librosa (more robust backends for MP3 on Windows)
+        # mono=False to preserve stereo if present
+        audio_data, sample_rate = librosa.load(str(file_path), sr=None, mono=False)
         
-        # Convert to numpy and handle channels
         # sounddevice expects (frames, channels)
-        audio_data = waveform.t().numpy()
-        
+        # librosa returns (channels, frames) for multi-channel, so we transpose
+        if len(audio_data.shape) > 1:
+            audio_data = audio_data.T
+            
         logger.info(f"Playing sound: {file_path.name} ({len(audio_data)/sample_rate:.2f}s)")
         
         # Play asynchronously

@@ -72,12 +72,13 @@ class ToolRegistry:
         """Get information about all registered tools"""
         return [tool.to_dict() for tool in self.tools.values()]
     
-    def execute(self, tool_name: str, **kwargs) -> ToolResult:
+    def execute(self, tool_name: str, user_confirmed: bool = False, **kwargs) -> ToolResult:
         """
         Execute a tool by name
         
         Args:
             tool_name: Name of tool to execute
+            user_confirmed: Whether user has explicitly confirmed this action
             **kwargs: Tool parameters
         
         Returns:
@@ -90,6 +91,17 @@ class ToolRegistry:
             return ToolResult(
                 success=False,
                 error=f"Tool '{tool_name}' not found"
+            )
+        
+        # Security validation
+        from core.security import validate_tool_execution
+        is_allowed, block_reason = validate_tool_execution(tool_name, kwargs, user_confirmed)
+        
+        if not is_allowed:
+            logger.error(f"Security policy blocked '{tool_name}': {block_reason}")
+            return ToolResult(
+                success=False,
+                error=f"Security policy violation: {block_reason}"
             )
         
         # Validate parameters

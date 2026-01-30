@@ -122,6 +122,55 @@ class IntentParser:
                 "intent": IntentType.TOOL_CALL,
                 "tool": "VolumeDownTool",
                 "params": {}
+            },
+            
+            # Web Search
+            r"(search (the )?web|web search|look up|find (on the web|online))": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "WebSearchTool",
+                "params": {}
+            },
+            
+            # Google Search
+            r"(search google|google search|google (for|it))": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "SearchGoogleTool",
+                "params": {}
+            },
+            
+            # YouTube Search
+            r"(search youtube|youtube search|find (on|in) youtube)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "SearchYouTubeTool",
+                "params": {}
+            },
+            
+            # Open URL
+            r"(open|go to|visit) (the )?(url|website|site|link)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "OpenURLTool",
+                "params": {}
+            },
+            
+            # Web Scraper
+            r"(read|scrape|get content from) (the )?(page|website|url)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "WebScraperTool",
+                "params": {}
+            },
+            
+            # Browser Control - Screenshot
+            r"(take |get )?screenshot of (.+)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "BrowserControlTool",
+                "params": {"action": "screenshot"}
+            },
+            
+            # Browser Control - Explicit
+            r"browser open (.+)": {
+                "intent": IntentType.TOOL_CALL,
+                "tool": "BrowserControlTool",
+                "params": {"action": "open_url"}
             }
         }
         
@@ -213,6 +262,19 @@ class IntentParser:
             else:
                 params["format"] = "full"
         
+        elif tool_name == "BrowserControlTool":
+            # Extract target for browser actions
+            if params.get("action") == "screenshot":
+                # Remove common prefixes including "text" (common mistranscription of "take")
+                target = re.sub(r"(take |get |text )?screenshot of", "", text, flags=re.IGNORECASE).strip()
+                # Remove trailing punctuation (common in STT)
+                target = target.rstrip('.')
+                params["target"] = target
+            elif params.get("action") == "open_url":
+                target = re.sub(r"browser open", "", text, flags=re.IGNORECASE).strip()
+                target = target.rstrip('.')
+                params["target"] = target
+        
         elif tool_name == "TelegramAlertTool":
             # Extract message to send
             message = re.sub(r"(notify me that|notify me|alert me that|alert me|remind me that|remind me)", "", text, flags=re.IGNORECASE).strip()
@@ -229,6 +291,33 @@ class IntentParser:
             # Extract search query
             query = re.sub(r"play", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
             params["query"] = query
+        
+        elif tool_name == "WebSearchTool":
+            # Extract search query
+            query = re.sub(r"(search (the )?web|web search|look up|find (on the web|online))", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["query"] = query
+            params["max_results"] = 5
+        
+        elif tool_name == "SearchGoogleTool":
+            # Extract search query
+            query = re.sub(r"(search google|google search|google (for|it))", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["query"] = query
+        
+        elif tool_name == "SearchYouTubeTool":
+            # Extract search query
+            query = re.sub(r"(search youtube|youtube search|find (on|in) youtube)", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["query"] = query
+        
+        elif tool_name == "OpenURLTool":
+            # Extract URL
+            url = re.sub(r"(open|go to|visit) (the )?(url|website|site|link)", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["url"] = url
+        
+        elif tool_name == "WebScraperTool":
+            # Extract URL
+            url = re.sub(r"(read|scrape|get content from) (the )?(page|website|url)", "", text, flags=re.IGNORECASE).strip().rstrip('.?!')
+            params["url"] = url
+            params["max_length"] = 2000
         
         return params
     

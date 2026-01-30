@@ -27,6 +27,9 @@ from tools.system_tools import GetTimeTool, GetSystemInfoTool, CalculatorTool
 from tools.memory_tools import RememberTool, RecallTool, GetMemoryStatsTool
 from tools.webhooks.telegram import TelegramAlertTool
 from tools.system_actions import OpenAppTool, PlayMusicTool, VolumeUpTool, VolumeDownTool, WorkSpaceAutomationTool
+from tools.web_search import WebSearchTool
+from tools.web_scraper import WebScraperTool
+from tools.browser_control import OpenURLTool, SearchGoogleTool, SearchYouTubeTool, BrowserControlTool
 from utils.compatibility import apply_fixes
 import keyboard
 from utils.audio import play_sound
@@ -123,6 +126,14 @@ class JARVIS:
             self.tool_registry.register(VolumeUpTool())
             self.tool_registry.register(VolumeDownTool())
             self.tool_registry.register(WorkSpaceAutomationTool())
+            
+            # Web & Browser tools
+            self.tool_registry.register(WebSearchTool())
+            self.tool_registry.register(WebScraperTool())
+            self.tool_registry.register(OpenURLTool())
+            self.tool_registry.register(SearchGoogleTool())
+            self.tool_registry.register(SearchYouTubeTool())
+            self.tool_registry.register(BrowserControlTool())
             
             logger.info(f"Registered {len(self.tool_registry.list_tools())} tools")
             

@@ -43,6 +43,8 @@ class AudioInput:
         self.is_speaking = False
         self.last_speech_time = 0
         self.speech_buffer = []
+        self.is_manual_recording = False
+        self.manual_buffer = []
         
         # Threading
         self.stop_event = Event()
@@ -108,6 +110,15 @@ class AudioInput:
         # Add to buffer
         self.buffer.append(audio_chunk)
         
+        # Manual recording takes precedence
+        if self.is_manual_recording:
+            self.manual_buffer.append(audio_chunk)
+            return
+
+        # If no callback is set, don't perform VAD (prevents ghost listening)
+        if not self.on_speech_detected:
+            return
+
         # Check for speech
         if self._is_speech(audio_chunk):
             if not self.is_speaking:
@@ -244,6 +255,28 @@ class AudioInput:
         else:
             logger.warning("Speech detection timeout")
             return None
+    
+    def start_manual_recording(self) -> None:
+        """Start capturing audio chunks to manual buffer"""
+        logger.debug("Starting manual audio capture")
+        self.manual_buffer = []
+        self.is_manual_recording = True
+        
+        # Ensure stream is running
+        if not self.is_listening:
+            self.start()
+
+    def stop_manual_recording(self) -> Optional[np.ndarray]:
+        """Stop capturing and return the manual buffer"""
+        logger.debug("Stopping manual audio capture")
+        self.is_manual_recording = False
+        
+        if not self.manual_buffer:
+            return None
+            
+        audio_data = np.concatenate(self.manual_buffer)
+        self.manual_buffer = []
+        return audio_data
     
     def __enter__(self):
         """Context manager entry"""

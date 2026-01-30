@@ -146,9 +146,11 @@ class JarvisConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     
     # Global settings
+    hotkey: str = Field(default="win+j", description="Hotkey to trigger JARVIS")
     wake_word: Optional[str] = Field(default=None, description="Wake word (None = always listening)")
     wake_word_sound_path: Optional[Path] = Field(default=None, description="Path to MP3 sound to play when wake word detected")
     push_to_talk: bool = Field(default=True, description="Use push-to-talk mode")
+    hotkey_mode: bool = Field(default=False, description="Use hotkey to trigger listening")
     debug_mode: bool = Field(default=False, description="Enable debug mode")
 
     @classmethod
@@ -177,12 +179,22 @@ class JarvisConfig(BaseModel):
         
         if ptt := os.getenv("JARVIS_PUSH_TO_TALK"):
             config.push_to_talk = ptt.lower() in ("true", "1", "yes")
-        
+            
+        if hotkey_mode := os.getenv("JARVIS_HOTKEY_MODE"):
+            config.hotkey_mode = hotkey_mode.lower() in ("true", "1", "yes")
+
+        if hotkey := os.getenv("JARVIS_HOTKEY"):
+            config.hotkey = hotkey
+
         if wake_word := os.getenv("JARVIS_WAKE_WORD"):
             config.wake_word = wake_word
             
         if wake_sound := os.getenv("JARVIS_WAKE_SOUND_PATH"):
             config.wake_word_sound_path = Path(wake_sound)
+            
+        # If hotkey mode is on, we don't want the audio engine searching for a wake word string
+        if config.hotkey_mode:
+            config.wake_word = None
         
         return config
 

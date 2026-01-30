@@ -28,6 +28,7 @@ from tools.memory_tools import RememberTool, RecallTool, GetMemoryStatsTool
 from tools.webhooks.telegram import TelegramAlertTool
 from tools.system_actions import OpenAppTool, PlayMusicTool, VolumeUpTool, VolumeDownTool, WorkSpaceAutomationTool
 from utils.compatibility import apply_fixes
+import keyboard
 from utils.audio import play_sound
 
 # Apply compatibility fixes before other imports
@@ -335,6 +336,81 @@ class JARVIS:
         finally:
             self.shutdown()
     
+    def run_hotkey(self) -> None:
+        """Run in hotkey-triggered mode (Hold-and-Release PTT)"""
+        logger.info(f"Starting hotkey mode (PTT: {self.config.hotkey})")
+        
+        self.is_running = True
+        self.tts.speak(f"JARVIS is active. Hold {self.config.hotkey} to speak.")
+        
+        # Override trigger state: Hotkey mode IS the trigger
+        self.awaiting_command = True
+        
+        # State tracking
+        self.is_held = False
+        self.is_processing = False
+
+        def on_press():
+            # Strict check: ignore if already recording or already processing
+            if self.is_held or self.is_processing:
+                return
+            
+            # Double check with keyboard library to avoid ghost events
+            if not keyboard.is_pressed(self.config.hotkey):
+                return
+
+            self.is_held = True
+            logger.info(f"Hotkey {self.config.hotkey} detected - Starting recording")
+            
+            if self.config.wake_word_sound_path:
+                play_sound(self.config.wake_word_sound_path)
+            
+            print(f"🎤 Recording... (Keep holding {self.config.hotkey})")
+            self.audio_input.start_manual_recording()
+
+        def on_release():
+            if not self.is_held:
+                return
+            
+            self.is_held = False
+            logger.info(f"Hotkey {self.config.hotkey} released - Stopping microphone")
+            
+            # Stop capture and process
+            audio_data = self.audio_input.stop_manual_recording()
+            
+            if audio_data is not None and len(audio_data) > 0:
+                self.is_processing = True
+                print("⌛ Processing your request...")
+                try:
+                    self.process_audio(audio_data)
+                finally:
+                    self.is_processing = False
+                    if self.is_running:
+                        print(f"\n[Ready. Hold {self.config.hotkey} to speak again]")
+            else:
+                print("⚠️ No speech captured (key released too quickly?)")
+
+        try:
+            # We use individual listeners for press/release
+            # trigger_on_release=False is the default for press actions
+            keyboard.add_hotkey(self.config.hotkey, on_press, trigger_on_release=False, suppress=True)
+            keyboard.add_hotkey(self.config.hotkey, on_release, trigger_on_release=True, suppress=True)
+
+            # Start the audio stream once so it's ready. 
+            # Note: No callback passed, VAD is disabled in AudioInput.
+            self.audio_input.start()
+            
+            logger.info(f"HOTKEY MODE ACTIVE: Use '{self.config.hotkey}' like a walkie-talkie.")
+            while self.is_running:
+                import time
+                time.sleep(0.1)
+        
+        except KeyboardInterrupt:
+            logger.info("Interrupted by user")
+        finally:
+            keyboard.remove_hotkey(self.config.hotkey)
+            self.shutdown()
+
     def shutdown(self) -> None:
         """Shutdown JARVIS gracefully"""
         if self._shutdown_complete:
@@ -380,8 +456,10 @@ def main():
         # Initialize
         jarvis.initialize()
         
-        # Run in interactive mode (default)
-        if jarvis.config.push_to_talk:
+        # Run in requested mode
+        if jarvis.config.hotkey_mode:
+            jarvis.run_hotkey()
+        elif jarvis.config.push_to_talk:
             jarvis.run_interactive()
         else:
             jarvis.run_continuous()

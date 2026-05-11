@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+*.log
+logs.txt
+test.txt
+test_profile.js
+test_browser.js
+_test_api.js
+desktop_test_*.txt
+mcp-servers/
+tillnow.md
+tillnow.txt
+.claude/
+.DS_Store
+Thumbs.db

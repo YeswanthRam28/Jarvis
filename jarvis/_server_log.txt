@@ -1,0 +1,2 @@
+MCP Desktop UI Server starting on localhost:9321
+MCP Desktop UI Server running on http://localhost:9321

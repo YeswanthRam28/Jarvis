@@ -1,0 +1,67 @@
+{
+  "name": "jarvis",
+  "version": "0.1.0",
+  "description": "Just A Rather Very Intelligent System - Autonomous Desktop Agent",
+  "main": "dist/main/index.js",
+  "bin": {
+    "jarvis": "./dist/main/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main/cli.js",
+    "dev": "tsc && node dist/main/cli.js",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "mcp:memory": "node dist/mcps/memory/server.js",
+    "mcp:user-profile": "node dist/mcps/user-profile/server.js",
+    "mcp:browser": "node dist/mcps/browser/server.js",
+    "mcp:filesystem": "node dist/mcps/filesystem/server.js",
+    "mcp:email": "node dist/mcps/email/server.js",
+    "mcp:calendar": "node dist/mcps/calendar/server.js",
+    "mcp:start": "npm run mcp:memory & npm run mcp:user-profile",
+    "mcp:start-all": "npm run mcp:memory & npm run mcp:user-profile & npm run mcp:browser & npm run mcp:filesystem",
+    "install:browser": "npx playwright install chromium"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "automation",
+    "desktop",
+    "nvidia",
+    "mcp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@langchain/core": "^1.1.40",
+    "@types/nodemailer": "^8.0.0",
+    "axios": "^1.7.9",
+    "better-sqlite3": "^11.7.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.7",
+    "electron": "^34.0.2",
+    "langchain": "^1.3.3",
+    "nodemailer": "^8.0.7",
+    "playwright": "^1.49.1",
+    "uuid": "^11.0.5",
+    "winston": "^3.17.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.7",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

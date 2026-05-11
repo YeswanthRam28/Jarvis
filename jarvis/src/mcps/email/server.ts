@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+
+import { createServer } from 'http';
+import { EmailServer } from './email_server';
+
+const PORT = process.env.MCP_EMAIL_PORT || 9324;
+
+const emailServer = new EmailServer();
+
+const server = createServer(async (req, res) => {
+  const url = new URL(req.url || '/', `http://localhost:${PORT}`);
+
+  // MCP protocol endpoints
+  if (url.pathname === '/mcp' || url.pathname === '/') {
+    if (req.method === 'POST') {
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk;
+      }
+
+      try {
+        const request = JSON.parse(body);
+        const response = emailServer.handleRequest(request);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(response));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: String(error) }));
+      }
+      return;
+    }
+
+    if (req.method === 'GET') {
+      const response = emailServer.handleRequest({
+        jsonrpc: '2.0',
+        id: 0,
+        method: 'tools/list',
+        params: {},
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
+      return;
+    }
+  }
+
+  if (url.pathname === '/sse') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    const clientId = Date.now();
+    console.log(`[EMAIL-MCP] Client connected: ${clientId}`);
+
+    res.write(`event: connected\ndata: ${JSON.stringify({ clientId })}\n\n`);
+
+    const heartbeat = setInterval(() => {
+      res.write(`event: heartbeat\ndata: ${JSON.stringify({ time: Date.now() })}\n\n`);
+    }, 30000);
+
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      console.log(`[EMAIL-MCP] Client disconnected: ${clientId}`);
+    });
+    return;
+  }
+
+  if (url.pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'healthy', server: 'mcp-email' }));
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not found');
+});
+
+server.listen(PORT, () => {
+  console.log(`[EMAIL-MCP] Server running on http://localhost:${PORT}/mcp`);
+  console.log(`[EMAIL-MCP] Tools: ${emailServer.getTools().map(t => t.name).join(', ')}`);
+});
+
+process.on('SIGTERM', () => {
+  console.log('[EMAIL-MCP] Shutting down...');
+  server.close();
+  process.exit(0);
+});

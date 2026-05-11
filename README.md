@@ -1,152 +1,92 @@
-# 🛰️ JARVIS — Fully Local AI Assistant
+# JARVIS — Just A Rather Very Intelligent System
 
-<div align="center">
+JARVIS is an **autonomous desktop agent** powered by NVIDIA NIM AI models. It understands natural language commands, plans and executes multi-step tasks across desktop applications, browsers, files, email, and more through a modular MCP (Model Context Protocol) server architecture.
 
-![Status](https://img.shields.io/badge/Mode-Fully%20Offline-success?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge)
-![Local LLM](https://img.shields.io/badge/LLM-phi2%20%2F%20GGUF-purple?style=for-the-badge)
-![UI](https://img.shields.io/badge/UI-Holographic_FUI-pink?style=for-the-badge)
+## Architecture
 
-**"A voice-controlled AI system that lives inside your laptop — listens continuously, understands speech, remembers context, controls your computer, and talks back. All offline."**
-
-</div>
-
----
-
-## 🧭 What Is Jarvis?
-
-Jarvis is a **fully-local AI automation system** built to behave like a personal digital operator. It runs **100% offline**, continuously listens for voice, converts speech to text, extracts intent, retrieves past memory, executes tools on your machine, and responds back with speech.
-
-Unlike Alexa or Siri — Jarvis **does not depend on cloud**, does **not** send data anywhere, and **can actually control your PC**.
-
----
-
-## 🎥 What Makes It Different
-
-| Capability                     | Exists in Voice Assistants | Exists in Jarvis                        |
-| ------------------------------ | -------------------------- | --------------------------------------- |
-| Offline execution              | No                         | Yes                                     |
-| Local speech-to-text           | Partially                  | Yes (Whisper CPU)                       |
-| Long‑term memory               | No                         | Yes (FAISS vector DB)                   |
-| Execute OS‑level commands      | Limited                    | Yes — open apps, volume, music, scripts |
-| Continuous background listener | Yes                        | Yes                                     |
-| Hackable / Extendable          | No                         | Yes (plugin toolbelt)                   |
-
----
-
-## 🧬 Core System Flow
+JARVIS uses a **5-stage pipeline** to process commands end-to-end:
 
 ```
-🎤 Microphone (always listening)
-        ↓
-🧏 Whisper STT → Text
-        ↓
-🧠 Intent Parser → Tool Router
-        ↓
-🔧 Tools (open apps, music, system commands)
-        ↓
-🧠 Local LLM (phi‑2‑GGUF via llama‑cpp)
-        ↓
-📝 Memory Engine (FAISS)
-        ↓
-🔊 Coqui‑TTS → Spoken audio reply
+User Input → Intent Parser → Decision Planner → Tool Caller → Executor → Reporter
 ```
 
----
+1. **Intent Parser** — Converts natural language into structured intents
+2. **Decision Planner** — Builds an optimized task DAG (Directed Acyclic Graph)
+3. **Tool Caller** — Maps tasks to the correct MCP tool
+4. **Executor** — Executes via MCP servers (desktop, browser, filesystem, shell, etc.)
+5. **Reporter** — Summarizes results, logs to memory, sends notifications
 
-## 🏗️ Architecture Diagram
-
-```mermaid
-graph TD
-A[Microphone Listener] --> B[Whisper STT]
-B --> C[Intent Parser]
-C --> D[Tool Router]
-D --> E[System Tools]
-C --> F[Local LLM - phi2 via llama cpp]
-F --> G[Response]
-G --> H[Coqui-TTS]
-G --> I[FAISS Vector Memory]
-```
-
----
-
-## 🧰 Major Components
-
-### Voice + Speech Layer
-
-* Whisper STT — CPU inference, high accuracy
-* VAD — continuous background listening
-
-### Brain Layer
-
-* LLM — phi‑2‑GGUF via llama‑cpp
-* Intent extraction → decides what Jarvis should do next
-
-### Memory Layer
-
-* FAISS vector DB → remembers context intelligently
-
-### Action Layer
-
-Tools capable of:
-
-* Opening apps (Chrome, calculator, Bluetooth panel, etc.)
-* Playing YouTube music
-* Adjusting system volume
-* Triggering Telegram automations
-* Executing OS commands (PowerShell)
-
----
-
-## 🚀 How to Run
-
-### Backend Setup
+## Setup
 
 ```bash
-git clone https://github.com/YeswanthRam28/Jarvis.git
-cd Jarvis
-python -m venv venv
-venv/Scripts/activate
-pip install -r requirements.txt
-```
-
-### Frontend HUD
-
-```bash
-cd ui
+cd jarvis
+cp .env.example .env    # Configure NV_API_KEY and other settings
 npm install
-cd ..
-./run_hud.ps1
+npm run build
 ```
 
----
+## Usage
 
----
+```bash
+# Run the full pipeline
+node dist/main/cli.js exec "open notepad and type hello"
 
+# Parse a command (stage 1 only)
+node dist/main/cli.js parse "send email to mom"
 
-## 🧾 Example Commands You Can Speak
+# Start individual MCP servers
+node dist/main/cli.js mcp start mcp-desktop-ui
+node dist/main/cli.js mcp start mcp-browser
+
+# Start all servers
+npm run mcp:start-all
+```
+
+## MCP Servers
+
+| Server | Port | Purpose |
+|--------|------|---------|
+| mcp-desktop-ui | 9321 | Desktop app control, UI automation |
+| mcp-browser | 9320 | Web automation (Edge via CDP) |
+| mcp-memory | 9310 | SQLite persistent memory |
+| mcp-user-profile | 9311 | User profile CRUD |
+| mcp-filesystem | 9322 | File operations |
+| mcp-shell | 9323 | Sandboxed shell commands |
+| mcp-email | 9324 | SMTP email |
+| mcp-notifications | 9326 | Desktop notifications + TTS |
+| mcp-code | 9327 | Sandboxed JS eval |
+| mcp-calendar | 9325 | Calendar operations |
+| mcp-payment | 9328 | Payment simulation |
+
+## Desktop Automation
+
+Uses **UIAutomation** (Windows) to extract the full UI accessibility tree as XML, giving the AI agent exact element positions, names, types, and states — no OCR or screenshot parsing needed.
+
+Two automation modes:
+- **`desktop_automation`** — Rule-based scripted actions via PowerShell SendKeys
+- **`automate_desktop`** — AI-powered LangGraph loop: extract UI → LLM reasons → execute → verify
+
+## Configuration
+
+Environment variables (see `.env.example`):
+- `NV_API_KEY` — NVIDIA NIM API key (required)
+- `GMAIL_EMAIL` / `GMAIL_PASSWORD` — For browser auto-login
+- SMTP settings for email server
+
+## Project Structure
 
 ```
-"Hey Jarvis, open Spotify"
-"Turn volume down"
-"Play Interstellar soundtrack"
-"Launch calculator"
-"Send message to Telegram bot"
+jarvis/
+├── src/
+│   ├── main/cli.ts          # Commander.js CLI
+│   ├── pipeline/            # 5-stage pipeline
+│   ├── agents/              # Desktop agent, UI extractor, automation agent
+│   ├── mcps/                # MCP server implementations
+│   ├── ai/                  # NVIDIA API client + model router
+│   ├── config/              # Config loader
+│   ├── context/             # Profile manager, context store
+│   └── utils/               # Logger
+├── dist/                    # Compiled output
+├── tests/
+└── package.json
 ```
-
----
-
-## 📎 Screenshots / Demonstration
-
-  <img src="./images/landing.jpeg" width="800"/>
-  <img src="./images/explain.jpeg" width="800"/>
-  <img src="./images/open.jpeg" width="800"/>
-
----
-
-## 📄 Operational License
-Distributed under the MIT License. See LICENSE for more information.
-
-`
-Designed with precision. Built for intelligence.
-`

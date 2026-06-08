@@ -89,6 +89,17 @@ const httpServer = http.createServer((req, res) => {
   res.end('Not found');
 });
 
+httpServer.on('error', (e: any) => {
+  if (e.code === 'EADDRINUSE') {
+    console.error(`\n[ERROR] Port ${PORT} is already in use.`);
+    console.error(`Please kill the process using port ${PORT} or change MCP_DESKTOP_UI_PORT in your .env file.`);
+    process.exit(1);
+  } else {
+    console.error(`\n[ERROR] Server encountered an error: ${e.message}`);
+    process.exit(1);
+  }
+});
+
 httpServer.listen(PORT, HOST, () => {
   console.log(`MCP Desktop UI Server running on http://${HOST}:${PORT}`);
 });

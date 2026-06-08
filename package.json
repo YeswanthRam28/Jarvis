@@ -22,7 +22,12 @@
     "mcp:email": "node dist/mcps/email/server.js",
     "mcp:calendar": "node dist/mcps/calendar/server.js",
     "mcp:start": "npm run mcp:memory & npm run mcp:user-profile",
-    "mcp:start-all": "npm run mcp:memory & npm run mcp:user-profile & npm run mcp:browser & npm run mcp:filesystem",
+    "mcp:desktop-ui": "node dist/mcps/desktop/server.js",
+    "mcp:shell": "node dist/mcps/shell/server.js",
+    "mcp:notifications": "node dist/mcps/notifications/server.js",
+    "mcp:code": "node dist/mcps/code/server.js",
+    "mcp:payment": "node dist/mcps/payment/server.js",
+    "mcp:start-all": "npm run mcp:memory & npm run mcp:user-profile & npm run mcp:browser & npm run mcp:filesystem & npm run mcp:desktop-ui & npm run mcp:shell & npm run mcp:notifications & npm run mcp:code & npm run mcp:payment",
     "install:browser": "npx playwright install chromium"
   },
   "keywords": [
@@ -52,13 +57,16 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
     "eslint": "^9.19.0",
     "eslint-config-prettier": "^10.0.1",
+    "jest": "^30.4.2",
     "prettier": "^3.4.2",
+    "ts-jest": "^29.4.11",
     "typescript": "^5.7.3"
   },
   "engines": {

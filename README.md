@@ -19,7 +19,6 @@ User Input → Intent Parser → Decision Planner → Tool Caller → Executor �
 ## Setup
 
 ```bash
-cd jarvis
 cp .env.example .env    # Configure NV_API_KEY and other settings
 npm install
 npm run build
@@ -76,7 +75,6 @@ Environment variables (see `.env.example`):
 ## Project Structure
 
 ```
-jarvis/
 ├── src/
 │   ├── main/cli.ts          # Commander.js CLI
 │   ├── pipeline/            # 5-stage pipeline

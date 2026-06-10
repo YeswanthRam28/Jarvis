@@ -1,90 +1,84 @@
 # JARVIS — Just A Rather Very Intelligent System
 
-JARVIS is an **autonomous desktop agent** powered by NVIDIA NIM AI models. It understands natural language commands, plans and executes multi-step tasks across desktop applications, browsers, files, email, and more through a modular MCP (Model Context Protocol) server architecture.
+JARVIS is a fully autonomous, voice-activated desktop agent powered by NVIDIA NIM AI models, Electron, and React. It understands natural language, retains long-term memories via local vector embeddings, and plans/executes multi-step tasks across desktop applications, browsers, files, and more through a modular MCP (Model Context Protocol) server architecture.
+
+## Features
+
+- **Cinematic Voice UI:** A beautiful, transparent overlay built with Electron, React, and WebGL (`ogl`). The central Orb pulses dynamically as JARVIS listens, thinks, and speaks.
+- **Instant Voice Interaction:** Uses Hugging Face's `whisper-large-v3` for high-accuracy Speech-To-Text and zero-latency OS-native Web Speech APIs for TTS.
+- **RAG & Long-Term Memory:** Features a private, 100% on-device vector database using `@xenova/transformers`. JARVIS records your preferences, contacts, and personal facts in a 3-tier memory system (Episodic, Semantic, Procedural).
+- **Desktop Automation:** Uses Windows UIAutomation and PowerShell to control desktop applications, WhatsApp, Spotify, and more. 
 
 ## Architecture
 
-JARVIS uses a **5-stage pipeline** to process commands end-to-end:
+JARVIS uses a **5-stage NLP pipeline** combined with 10 independent MCP microservices:
 
 ```
-User Input → Intent Parser → Decision Planner → Tool Caller → Executor → Reporter
+Voice Input → Intent Parser (+ RAG) → Decision Planner → Tool Caller → Executor → Reporter
 ```
 
-1. **Intent Parser** — Converts natural language into structured intents
-2. **Decision Planner** — Builds an optimized task DAG (Directed Acyclic Graph)
-3. **Tool Caller** — Maps tasks to the correct MCP tool
-4. **Executor** — Executes via MCP servers (desktop, browser, filesystem, shell, etc.)
-5. **Reporter** — Summarizes results, logs to memory, sends notifications
+1. **Intent Parser** — Converts speech into structured intents. Injects your personal facts via local vector embeddings.
+2. **Decision Planner** — Builds an optimized Task DAG.
+3. **Tool Caller** — Maps tasks to the correct MCP tool.
+4. **Executor** — Executes via MCP servers (desktop, browser, filesystem, etc).
+5. **Reporter** — Synthesizes results into spoken audio and logs new facts to memory.
 
 ## Setup
 
 ```bash
-cp .env.example .env    # Configure NV_API_KEY and other settings
+# 1. Clone the repository
+# 2. Configure environment variables
+cp .env.example .env
+# Make sure to set NV_API_KEY and HF_TOKEN
+
+# 3. Install dependencies
 npm install
+
+# 4. Build the backend and the React UI
 npm run build
+
+# 5. Start the Electron application
+npm run dev
 ```
 
-## Usage
+## Global Shortcuts
 
-```bash
-# Run the full pipeline
-node dist/main/cli.js exec "open notepad and type hello"
-
-# Parse a command (stage 1 only)
-node dist/main/cli.js parse "send email to mom"
-
-# Start individual MCP servers
-node dist/main/cli.js mcp start mcp-desktop-ui
-node dist/main/cli.js mcp start mcp-browser
-
-# Start all servers
-npm run mcp:start-all
-```
+- Press `Ctrl + Space` (or `Cmd + Space` on Mac) anywhere on your computer to instantly summon JARVIS or hide him.
+- Click the Microphone icon to speak to him.
+- Click the Brain icon to view your personalized Semantic Memory board.
 
 ## MCP Servers
 
-| Server | Port | Purpose |
-|--------|------|---------|
-| mcp-desktop-ui | 9321 | Desktop app control, UI automation |
-| mcp-browser | 9320 | Web automation (Edge via CDP) |
-| mcp-memory | 9310 | SQLite persistent memory |
-| mcp-user-profile | 9311 | User profile CRUD |
-| mcp-filesystem | 9322 | File operations |
-| mcp-shell | 9323 | Sandboxed shell commands |
-| mcp-email | 9324 | SMTP email |
-| mcp-notifications | 9326 | Desktop notifications + TTS |
-| mcp-code | 9327 | Sandboxed JS eval |
-| mcp-calendar | 9325 | Calendar operations |
-| mcp-payment | 9328 | Payment simulation |
+JARVIS's capabilities are split across dynamically loaded MCP servers:
 
-## Desktop Automation
-
-Uses **UIAutomation** (Windows) to extract the full UI accessibility tree as XML, giving the AI agent exact element positions, names, types, and states — no OCR or screenshot parsing needed.
-
-Two automation modes:
-- **`desktop_automation`** — Rule-based scripted actions via PowerShell SendKeys
-- **`automate_desktop`** — AI-powered LangGraph loop: extract UI → LLM reasons → execute → verify
-
-## Configuration
-
-Environment variables (see `.env.example`):
-- `NV_API_KEY` — NVIDIA NIM API key (required)
-- `GMAIL_EMAIL` / `GMAIL_PASSWORD` — For browser auto-login
-- SMTP settings for email server
+| Server | Purpose |
+|--------|---------|
+| `mcp-desktop-ui` | Desktop app control, WhatsApp, and UI automation |
+| `mcp-browser` | Web automation (Edge via CDP) |
+| `mcp-memory` | SQLite persistent memory + Xenova Vector Embeddings |
+| `mcp-user-profile` | User profile and contacts CRUD |
+| `mcp-filesystem` | File operations |
+| `mcp-shell` | Sandboxed shell commands |
+| `mcp-code` | Sandboxed JavaScript evaluation |
+| `mcp-email` | SMTP email automation |
+| `mcp-calendar` | Calendar operations |
+| `mcp-payment` | Payment simulation |
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── main/cli.ts          # Commander.js CLI
-│   ├── pipeline/            # 5-stage pipeline
-│   ├── agents/              # Desktop agent, UI extractor, automation agent
-│   ├── mcps/                # MCP server implementations
+│   ├── electron/            # Electron main & preload scripts
+│   ├── pipeline/            # 5-stage NLP pipeline + RAG
+│   ├── mcps/                # 10 MCP server implementations
 │   ├── ai/                  # NVIDIA API client + model router
-│   ├── config/              # Config loader
-│   ├── context/             # Profile manager, context store
-│   └── utils/               # Logger
+│   └── scheduler/           # Nightly reasoning jobs (memory distillation)
+├── ui/
+│   ├── src/                 # React frontend
+│   │   ├── App.tsx          # Main Voice UI & State
+│   │   ├── Orb.tsx          # WebGL Orb visualizer
+│   │   └── MemoryBoard.tsx  # Slide-out RAG memory manager
+│   └── vite.config.ts       # Vite config
 ├── dist/                    # Compiled output
-├── tests/
 └── package.json
 ```

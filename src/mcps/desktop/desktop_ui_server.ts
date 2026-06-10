@@ -380,14 +380,25 @@ Start-Sleep -Seconds 2
 
 $procs = Get-Process | Where-Object { $_.MainWindowTitle -like "*WhatsApp*" }
 if ($procs.Count -gt 0) {
+    # Focus search
     [System.Windows.Forms.SendKeys]::SendWait("^f")
-    Start-Sleep -Milliseconds 200
+    Start-Sleep -Milliseconds 800
+    
+    # Type contact name
     [System.Windows.Forms.SendKeys]::SendWait("${escapedContact}")
-    Start-Sleep -Milliseconds 300
+    Start-Sleep -Milliseconds 2000  # Wait for search results to populate
+    
+    # Select first result (Down Arrow then Enter)
+    [System.Windows.Forms.SendKeys]::SendWait("{DOWN}")
+    Start-Sleep -Milliseconds 500
     [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
-    Start-Sleep -Milliseconds 300
+    Start-Sleep -Milliseconds 1000  # Wait for chat window to open
+    
+    # Type message
     [System.Windows.Forms.SendKeys]::SendWait("${escapedMessage}")
-    Start-Sleep -Milliseconds 200
+    Start-Sleep -Milliseconds 500
+    
+    # Send
     [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
     Write-Output "Sent"
 } else {

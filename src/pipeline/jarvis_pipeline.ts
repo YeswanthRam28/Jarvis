@@ -63,6 +63,8 @@ export class JARVISPipeline {
     this.config = { ...this.config, ...config };
   }
 
+  private mcpServersStarted: boolean = false;
+
   public async run(
     userInput: string,
     onProgress?: (stage: string, message: string) => void
@@ -75,14 +77,29 @@ export class JARVISPipeline {
       sessionId: session?.session_id || '',
     };
 
-try {
-      if (this.config.startMCPServers) {
-        onProgress?.('setup', 'Starting MCP servers...');
-        await this.startMCPServers();
+    try {
+      // Step 0: RAG - Fetch semantic context
+      let ragContext = '';
+      try {
+        onProgress?.('setup', 'Retrieving memory context...');
+        const searchRes = await this.mcpRegistry.callTool('mcp-memory', 'semantic_search', {
+          query: userInput,
+          type: 'semantic',
+          limit: 3
+        });
+        
+        const ragResult = searchRes.result as any;
+        if (searchRes.success && ragResult?.results && ragResult.results.length > 0) {
+          const memories = ragResult.results.map((r: any) => `- ${r.text}`);
+          ragContext = memories.join('\n');
+          this.logger.info(`RAG found ${ragResult.results.length} relevant memories.`);
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to retrieve RAG context: ${e}`);
       }
 
       onProgress?.('intent_parser', 'Parsing your command...');
-      const parseResult = await this.intentParser.parse(userInput);
+      const parseResult = await this.intentParser.parse(userInput, ragContext);
 
       if (!parseResult.success) {
         result.error = parseResult.error;
@@ -172,7 +189,9 @@ try {
     }
   }
 
-  private async startMCPServers(): Promise<void> {
+  public async startMCPServers(): Promise<void> {
+    if (!this.config.startMCPServers || this.mcpServersStarted) return;
+    this.mcpServersStarted = true;
     const servers = [
       'mcp-memory',
       'mcp-user-profile',

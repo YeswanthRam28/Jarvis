@@ -1,5 +1,6 @@
 node_modules/
 dist/
+ui/dist/
 .env
 *.log
 logs.txt
@@ -14,3 +15,5 @@ tillnow.txt
 .claude/
 .DS_Store
 Thumbs.db
+memory.db
+profile.json

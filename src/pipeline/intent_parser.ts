@@ -173,12 +173,12 @@ export class IntentParser {
     return IntentParser.instance;
   }
 
-  public async parse(userInput: string): Promise<IntentParseResult> {
+  public async parse(userInput: string, ragContext?: string): Promise<IntentParseResult> {
     this.logger.info(`Parsing intent for: "${userInput}"`);
 
     try {
       const profile = this.profileManager.getProfile();
-      const contextMessages = this.buildContextMessages(profile, userInput);
+      const contextMessages = this.buildContextMessages(profile, userInput, ragContext);
 
       const response = await this.nvidiaClient.chat({
         model: this.modelRouter.getModelForStage('intent_parser'),
@@ -223,7 +223,8 @@ export class IntentParser {
 
   private buildContextMessages(
     profile: ReturnType<ProfileManager['getProfile']>,
-    userInput: string
+    userInput: string,
+    ragContext?: string
   ): ChatMessage[] {
     const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }];
 
@@ -246,6 +247,10 @@ export class IntentParser {
 
     if (profile.preferences.internship_fields?.length) {
       contextParts.push(`Interested fields: ${profile.preferences.internship_fields.join(', ')}`);
+    }
+
+    if (ragContext) {
+      contextParts.push(`\nRetrieved Relevant Memories:\n${ragContext}`);
     }
 
     if (contextParts.length > 0) {

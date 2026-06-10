@@ -48,10 +48,10 @@ const httpServer = http.createServer((req, res) => {
       body += chunk.toString();
     });
 
-    req.on("end", () => {
+    req.on("end", async () => {
       try {
         const request: MCPRequest = JSON.parse(body);
-        const response: MCPResponse = server.handleRequest(request);
+        const response: MCPResponse = await server.handleRequest(request);
 
         res.writeHead(200, {
           "Content-Type": "application/json",
